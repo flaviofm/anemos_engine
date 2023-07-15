@@ -1,6 +1,4 @@
 import { setup_data } from "../app";
-import { ClientDevice } from "../public/front";
-
 const getMP3Duration = require("get-mp3-duration");
 
 export interface Track {
@@ -16,7 +14,6 @@ export class TrackManager {
   private start_time = Date.now();
 
   constructor() {
-    //reads all .mp3 files in /tracks folder and fills the array tracks with nasme, file path, duration and increasing id. Must read them in alphabetical oreder so the ids are incrementing
     const fs = require("fs");
     const path = require("path");
     const tracks_path = path.join(__dirname, "../public/tracks");
@@ -41,18 +38,18 @@ export class TrackManager {
 
   public get preview_track() {
     return this._tracks.reduce((prev, curr) =>
-      prev.instances < curr.instances ? prev : curr
-    )
+      prev.instances <= curr.instances ? prev : curr
+    );
   }
 
   public get pick_track() {
-    //finds the first track with less instances, increased the instances and returns the track
     const track = this.preview_track;
     track.instances++;
+    console.log("PICKED", track.label);
     return track;
   }
 
-  public release_track(t:Track) {
+  public release_track(t: Track) {
     this._tracks.find((track) => track.id === t.id)!.instances--;
   }
 
@@ -70,7 +67,7 @@ export interface timestamp {
 }
 
 export class TimeManager {
-  private duration: number;
+  private _duration: number;
   private _start_time: number;
 
   constructor() {}
@@ -78,19 +75,30 @@ export class TimeManager {
   public build(duration: number) {
     const d = Date.now();
     this._start_time = d;
-    this.duration = duration;
+    this._duration = duration;
+  }
+
+  public get duration() {
+    return this._duration;
   }
 
   public get start_time() {
     return this._start_time;
   }
 
+  public get current_server_time() {
+    return this.current_time - this.start_time;
+  }
+
   public get current_track_time() {
-    let time = this.current_time - this.start_time;
-    while (time > this.duration) {
-      time -= this.duration;
-    }
-    return time;
+    // console.log("current time", this.current_server_time, this.duration, this.current_loop);
+    const res = this.current_server_time - this.duration * this.current_loop;
+    // console.log("=", res);
+    return res
+  }
+
+  public get current_loop() {
+    return Math.floor(this.current_server_time / this.duration);
   }
 
   public get current_time() {
@@ -100,14 +108,48 @@ export class TimeManager {
 
 export class ServerDevice {
   static id = 0;
-  static PING_WAIT_TIMEOUT = 15000;
+  static PING_WAIT_TIMEOUT = 7500;
+  static KILL_DEVICE_TIMEOUT = 7500 * 5;
 
   private timeout: ReturnType<typeof setTimeout>;
 
-  private _active = true;
+  private __dead__ = false;
+  private kill() {
+    console.warn("🪦", "RIP DEVICE", this.id);
+    this.stop_dead_sentence()
+    this.stop_ping_timeout()
+    this.__dead__ = true;
+  }
+  public get dead() {
+    return this.__dead__;
+  }
 
+  //ACTIVE
+  private _active = true;
   public get active() {
     return this._active;
+  }
+  private inactivity_timeout: ReturnType<typeof setTimeout>;
+  private stop_dead_sentence() {
+    if(!this.inactivity_timeout) return
+    clearTimeout(this.inactivity_timeout);
+    this.inactivity_timeout = undefined!
+  }
+  public set active(a: boolean) {
+    if(this.dead) throw new Error("NO")
+    if (a == false && this._active == true) {
+      console.log("DEACTIVATED", this.id);
+      this.inactivity_timeout = setTimeout(() => {
+        //TODO: kill device
+        this.kill();
+        console.warn("SERVER KILLED INACTIVE", this.id);
+      }, ServerDevice.KILL_DEVICE_TIMEOUT);
+    }
+    if (a == true && this._active == false) {
+      console.log("REVIVING", this.id);
+      if (!this.inactivity_timeout) this.stop_dead_sentence()
+    }
+    this._active = a;
   }
 
   private _id: number;
@@ -122,18 +164,30 @@ export class ServerDevice {
     return this._track;
   }
 
-  //write a method ping that will run a method kill after 15 seconds but if ping is executed again the timer restarts
+  private stop_ping_timeout() {
+    if(!this.timeout) return
+    clearTimeout(this.timeout)
+    this.timeout = undefined!
+  }
+
   public async ping() {
-    clearTimeout(this.timeout);
-    if(!this._active) {
-      console.warn("should ping but not active - OLD DEVICE");
-      return
-    } else {
-      console.log("PINGING", this.id, Date.now());
+    console.log('🏓', this.id, "pings");
+    
+    this.stop_ping_timeout()
+    
+    if(this.dead) {
+      throw new Error("DEVICE IS DEAD")
     }
+    if (!this._active) {
+      console.warn("should ping but not active - OLD DEVICE");
+      // return;
+    }
+    this.active = true
+    // console.log("PINGING", this.id, Date.now());
     this.timeout = setTimeout(() => {
       console.warn("PING TIMEOUT FOR", this.id);
-      this._active = false;
+      this.active = false;
     }, ServerDevice.PING_WAIT_TIMEOUT);
+    return
   }
 }

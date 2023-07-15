@@ -45,12 +45,30 @@ var ip = require("ip");
 //SERVER
 exports.app = express();
 var port = 3000;
+//MIDDLEWARE
 exports.app.use(express.static(path.join(__dirname, "/public")));
 var bodyParser = require("body-parser");
 exports.app.use(bodyParser.urlencoded({
     extended: true,
 }));
 exports.app.use(bodyParser.json());
+var cors = require("cors");
+exports.app.use(cors());
+exports.app.get("/monitor_data", function (req, res) {
+    //FIXME: non va bene una call al secondo intaserà
+    // console.log("🪬 monitor");
+    var data = {
+        devices: DEVICES,
+        time_manager: {
+            current_server_time: TIME.current_time,
+            duration: TIME.duration,
+            current_track_time: TIME.current_track_time,
+            current_loop: TIME.current_loop,
+        },
+        track_manager: TRACKS,
+    };
+    res.send(data);
+});
 exports.app.get("/", function (req, res) {
     res.sendFile(path.join(__dirname, "/public/index.html"));
 });
@@ -75,25 +93,28 @@ exports.app.get("/setup", function (req, res) {
     };
     res.send(data);
 });
-// interface check_data {
-//     adjust?: number,
-//     replace?: string,
-// }
 exports.app.post("/vitals", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var id_1, device, track, check_data;
+    var id_1, device_1, track, check_data;
     return __generator(this, function (_a) {
         try {
             id_1 = req.body.id;
-            device = DEVICES.find(function (d) { return d.id === id_1; });
-            if (!device)
+            device_1 = DEVICES.find(function (d) { return d.id === id_1; });
+            if (!device_1)
                 throw new Error("device not found");
-            if (!device.active) {
-                DEVICES.splice(DEVICES.indexOf(device), 1);
-                TRACKS.release_track(device.track);
+            if (!device_1.active) {
+                device_1.active = true;
+            }
+            if (device_1.dead) {
+                DEVICES.splice(DEVICES.indexOf(device_1), 1);
+                TRACKS.release_track(device_1.track);
                 throw new Error("device not active. REMOVE");
             }
-            device.ping();
-            track = device.track;
+            device_1.ping().catch(function (err) {
+                console.warn("🔴\t", err.message);
+                DEVICES.splice(DEVICES.indexOf(device_1), 1);
+                throw err;
+            });
+            track = device_1.track;
             check_data = {
                 start_time: TIME.start_time,
                 current_time: TIME.current_time,
@@ -114,12 +135,12 @@ function start_server(port) {
         exports.app.listen(port, function () {
             //gets the server ip address
             var serverIp = ip.address();
-            console.debug("server started at http://".concat(serverIp, ":").concat(port));
+            console.debug("\uD83C\uDF08\tServer started at http://".concat(serverIp, ":").concat(port, "\nBACKEND at: http://").concat(serverIp, ":").concat(port, "/backend.html\n"));
             //TIME
             TIME.build(TRACKS.duration);
             //OSC
             (0, osc_client_1.startScene)();
-            console.debug("OSC", "osc sent");
+            console.debug("▶️\tOSC", "osc sent");
         });
     }
     catch (err) {

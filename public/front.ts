@@ -67,7 +67,7 @@ async function init(data: setup_data) {
 }
 
 export class ClientDevice {
-  static ADJUST_THRESHOLD = 5000;
+  static ADJUST_THRESHOLD = 5; //seconds
 
   private audio: HTMLAudioElement;
   private log: HTMLElement;
@@ -75,13 +75,12 @@ export class ClientDevice {
   private error_log: HTMLElement;
   private track_log: HTMLElement;
 
-
-  private async kill(str:string) {
+  private async kill(str: string) {
     await this.fade_out();
     this.audio.pause();
     this.audio.src = "";
     this.audio.load();
-    this.status.innerHTML = "DEAD by " + str ;
+    this.status.innerHTML = "DEAD by " + str;
     throw new Error("DEAD");
   }
 
@@ -128,13 +127,14 @@ export class ClientDevice {
   }
 
   private get current_playback_time() {
-    return (
-      (this.current_client_time -
-        this.client_start_time +
-        this.server_current_time -
-        this.server_start_time) /
-      1000
-    );
+    return this.audio.currentTime;
+    // return (
+    //   (this.current_client_time -
+    //     this.client_start_time +
+    //     this.server_current_time -
+    //     this.server_start_time) /
+    //   1000
+    // );
   }
 
   private set_track(t: Track) {
@@ -163,13 +163,15 @@ export class ClientDevice {
     //   console.warn("ALREADY PLAYING");
     //   return
     // }
+    //CHECKS TIME - qua controlla manualmente ma i ping confermeranno
+    // this.ping_once();
+    this.set_time(this.computed_current_track_time);
+
     try {
-      console.log("DICOANE");
-      
       await this.audio.play();
     } catch (err) {
       console.log("NOT TIME YET");
-      return
+      return;
     }
     // this.audio.play();
     this.status.innerHTML = "PLAYING";
@@ -188,6 +190,23 @@ export class ClientDevice {
 
   private get audio_current_time() {
     return this.audio.currentTime;
+  }
+
+  private get local_duration() {
+    return this.audio.duration;
+  }
+
+  private get computed_current_track_time() {
+    const server_count = this.server_start_time - this.server_current_time;
+    const local_count =
+      (Date.now() - this.server_start_time) % this.local_duration;
+
+    const check_time = server_count - local_count;
+    if (check_time < 2 && check_time > -2) {
+      return local_count;
+    } else {
+      return server_count;
+    }
   }
 
   private get src() {
@@ -269,10 +288,8 @@ export class ClientDevice {
     }, ClientDevice.PING_TIMEOUT);
   }
 
-  public ping() {
-    console.debug("PING");
-    this.reset_timer();
-    const ping = fetch("/vitals", {
+  private ping_once() {
+    return fetch("/vitals", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -285,6 +302,12 @@ export class ClientDevice {
         this.error_log.innerHTML = "";
         await this.check(data);
       });
+  }
+
+  public ping() {
+    console.debug("PING");
+    this.reset_timer();
+    const ping = this.ping_once();
     ////
     return ping.then(async (res) => {
       await this.delay(ClientDevice.PING_HOLD);
@@ -302,20 +325,42 @@ export class ClientDevice {
   }
 
   private async check_time(client_vitals: Vitals, server_vitals: Vitals) {
-    //checks difference between client and server time
-    const client_time = client_vitals.current_time - client_vitals.start_time;
-    const server_time = server_vitals.current_time - server_vitals.start_time;
-    const time_difference = client_time - server_time;
+    const server_track_time = server_vitals.current_track_time/1000;
+    const client_track_time = client_vitals.current_track_time;
+
+    const difference = server_track_time - client_track_time;
+    console.log(
+      "TRACK TIME DIFF",
+      difference,
+      server_track_time,
+      client_track_time
+    );
     if (
-      time_difference > ClientDevice.ADJUST_THRESHOLD ||
-      time_difference < -ClientDevice.ADJUST_THRESHOLD
+      difference > ClientDevice.ADJUST_THRESHOLD ||
+      difference < -ClientDevice.ADJUST_THRESHOLD
     ) {
       //adjust
       console.log("ADJUSTING TIME");
-      return this.set_time(server_time);
+      return this.set_time(server_track_time);
+    } else {
+      console.log("TIME OK");
     }
-    console.log("TIME OK");
-    
+
+    // //checks difference between client and server time
+    // const client_time = client_vitals.current_time - client_vitals.start_time;
+    // const server_time = server_vitals.current_time - server_vitals.start_time;
+    // const offset = client_time - server_time;
+
+    // const time_difference = client_time - server_time;
+    // if (
+    //   time_difference > ClientDevice.ADJUST_THRESHOLD ||
+    //   time_difference < -ClientDevice.ADJUST_THRESHOLD
+    // ) {
+    //   //adjust
+    //   console.log("ADJUSTING TIME");
+    //   return this.set_time(server_time);
+    // }
+
     return;
   }
 

@@ -141,7 +141,7 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
         this.log.innerHTML = "ID: " + this.id;
         this.status.innerHTML = "INIT";
     }
-    ClientDevice.prototype.kill = function () {
+    ClientDevice.prototype.kill = function (str) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -151,7 +151,7 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
                         this.audio.pause();
                         this.audio.src = "";
                         this.audio.load();
-                        this.status.innerHTML = "DEAD";
+                        this.status.innerHTML = "DEAD by " + str;
                         throw new Error("DEAD");
                 }
             });
@@ -193,11 +193,14 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
     });
     Object.defineProperty(ClientDevice.prototype, "current_playback_time", {
         get: function () {
-            return ((this.current_client_time -
-                this.client_start_time +
-                this.server_current_time -
-                this.server_start_time) /
-                1000);
+            return this.audio.currentTime;
+            // return (
+            //   (this.current_client_time -
+            //     this.client_start_time +
+            //     this.server_current_time -
+            //     this.server_start_time) /
+            //   1000
+            // );
         },
         enumerable: false,
         configurable: true
@@ -236,10 +239,16 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
                     case 0:
                         if (this.audio.src == "")
                             throw new Error("NO TRACK");
+                        // if (!this.audio.paused) {
+                        //   console.warn("ALREADY PLAYING");
+                        //   return
+                        // }
+                        //CHECKS TIME - qua controlla manualmente ma i ping confermeranno
+                        // this.ping_once();
+                        this.set_time(this.computed_current_track_time);
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        console.log("DICOANE");
                         return [4 /*yield*/, this.audio.play()];
                     case 2:
                         _a.sent();
@@ -277,6 +286,28 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
     Object.defineProperty(ClientDevice.prototype, "audio_current_time", {
         get: function () {
             return this.audio.currentTime;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(ClientDevice.prototype, "local_duration", {
+        get: function () {
+            return this.audio.duration;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(ClientDevice.prototype, "computed_current_track_time", {
+        get: function () {
+            var server_count = this.server_start_time - this.server_current_time;
+            var local_count = (Date.now() - this.server_start_time) % this.local_duration;
+            var check_time = server_count - local_count;
+            if (check_time < 2 && check_time > -2) {
+                return local_count;
+            }
+            else {
+                return server_count;
+            }
         },
         enumerable: false,
         configurable: true
@@ -352,18 +383,16 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
             _this.error_log.innerHTML = "ERROR: NO PING #" + _this.missed_pings;
             if (_this.missed_pings > ClientDevice.PING_COUNT) {
                 _this.error_log.innerHTML = "ERROR: TOO MANY MISSED PINGS";
-                _this.kill();
+                _this.kill("missed pings");
             }
             else {
                 _this.reset_timer();
             }
         }, ClientDevice.PING_TIMEOUT);
     };
-    ClientDevice.prototype.ping = function () {
+    ClientDevice.prototype.ping_once = function () {
         var _this = this;
-        console.debug("PING");
-        this.reset_timer();
-        var ping = fetch("/vitals", {
+        return fetch("/vitals", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -374,13 +403,22 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
             .then(function (data) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.check(data)];
+                    case 0:
+                        this.missed_pings = 0;
+                        this.error_log.innerHTML = "";
+                        return [4 /*yield*/, this.check(data)];
                     case 1:
                         _a.sent();
                         return [2 /*return*/];
                 }
             });
         }); });
+    };
+    ClientDevice.prototype.ping = function () {
+        var _this = this;
+        console.debug("PING");
+        this.reset_timer();
+        var ping = this.ping_once();
         ////
         return ping.then(function (res) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -403,18 +441,34 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
     };
     ClientDevice.prototype.check_time = function (client_vitals, server_vitals) {
         return __awaiter(this, void 0, void 0, function () {
-            var client_time, server_time, time_difference;
+            var server_track_time, client_track_time, difference;
             return __generator(this, function (_a) {
-                client_time = client_vitals.current_time - client_vitals.start_time;
-                server_time = server_vitals.current_time - server_vitals.start_time;
-                time_difference = client_time - server_time;
-                if (time_difference > ClientDevice.ADJUST_THRESHOLD ||
-                    time_difference < -ClientDevice.ADJUST_THRESHOLD) {
+                server_track_time = server_vitals.current_track_time / 1000;
+                client_track_time = client_vitals.current_track_time;
+                difference = server_track_time - client_track_time;
+                console.log("TRACK TIME DIFF", difference, server_track_time, client_track_time);
+                if (difference > ClientDevice.ADJUST_THRESHOLD ||
+                    difference < -ClientDevice.ADJUST_THRESHOLD) {
                     //adjust
                     console.log("ADJUSTING TIME");
-                    return [2 /*return*/, this.set_time(server_time)];
+                    return [2 /*return*/, this.set_time(server_track_time)];
                 }
-                console.log("TIME OK");
+                else {
+                    console.log("TIME OK");
+                }
+                // //checks difference between client and server time
+                // const client_time = client_vitals.current_time - client_vitals.start_time;
+                // const server_time = server_vitals.current_time - server_vitals.start_time;
+                // const offset = client_time - server_time;
+                // const time_difference = client_time - server_time;
+                // if (
+                //   time_difference > ClientDevice.ADJUST_THRESHOLD ||
+                //   time_difference < -ClientDevice.ADJUST_THRESHOLD
+                // ) {
+                //   //adjust
+                //   console.log("ADJUSTING TIME");
+                //   return this.set_time(server_time);
+                // }
                 return [2 /*return*/];
             });
         });
@@ -433,9 +487,9 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
             });
         });
     };
-    ClientDevice.ADJUST_THRESHOLD = 5000;
-    ClientDevice.PING_COUNT = 3;
-    ClientDevice.PING_TIMEOUT = 5000;
-    ClientDevice.PING_HOLD = 3000;
+    ClientDevice.ADJUST_THRESHOLD = 5; //seconds
+    ClientDevice.PING_COUNT = 5;
+    ClientDevice.PING_TIMEOUT = 7500;
+    ClientDevice.PING_HOLD = 5000;
     return ClientDevice;
 }());

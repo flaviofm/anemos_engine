@@ -52,7 +52,6 @@ var TrackManager = /** @class */ (function () {
         var _this = this;
         this._tracks = [];
         this.start_time = Date.now();
-        //reads all .mp3 files in /tracks folder and fills the array tracks with nasme, file path, duration and increasing id. Must read them in alphabetical oreder so the ids are incrementing
         var fs = require("fs");
         var path = require("path");
         var tracks_path = path.join(__dirname, "../public/tracks");
@@ -77,7 +76,7 @@ var TrackManager = /** @class */ (function () {
     Object.defineProperty(TrackManager.prototype, "preview_track", {
         get: function () {
             return this._tracks.reduce(function (prev, curr) {
-                return prev.instances < curr.instances ? prev : curr;
+                return prev.instances <= curr.instances ? prev : curr;
             });
         },
         enumerable: false,
@@ -85,9 +84,9 @@ var TrackManager = /** @class */ (function () {
     });
     Object.defineProperty(TrackManager.prototype, "pick_track", {
         get: function () {
-            //finds the first track with less instances, increased the instances and returns the track
             var track = this.preview_track;
             track.instances++;
+            console.log("PICKED", track.label);
             return track;
         },
         enumerable: false,
@@ -114,8 +113,15 @@ var TimeManager = /** @class */ (function () {
     TimeManager.prototype.build = function (duration) {
         var d = Date.now();
         this._start_time = d;
-        this.duration = duration;
+        this._duration = duration;
     };
+    Object.defineProperty(TimeManager.prototype, "duration", {
+        get: function () {
+            return this._duration;
+        },
+        enumerable: false,
+        configurable: true
+    });
     Object.defineProperty(TimeManager.prototype, "start_time", {
         get: function () {
             return this._start_time;
@@ -123,13 +129,26 @@ var TimeManager = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Object.defineProperty(TimeManager.prototype, "current_server_time", {
+        get: function () {
+            return this.current_time - this.start_time;
+        },
+        enumerable: false,
+        configurable: true
+    });
     Object.defineProperty(TimeManager.prototype, "current_track_time", {
         get: function () {
-            var time = this.current_time - this.start_time;
-            while (time > this.duration) {
-                time -= this.duration;
-            }
-            return time;
+            // console.log("current time", this.current_server_time, this.duration, this.current_loop);
+            var res = this.current_server_time - this.duration * this.current_loop;
+            // console.log("=", res);
+            return res;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(TimeManager.prototype, "current_loop", {
+        get: function () {
+            return Math.floor(this.current_server_time / this.duration);
         },
         enumerable: false,
         configurable: true
@@ -147,16 +166,56 @@ exports.TimeManager = TimeManager;
 var ServerDevice = exports.ServerDevice = /** @class */ (function () {
     function ServerDevice(_track) {
         this._track = _track;
+        this.__dead__ = false;
+        //ACTIVE
         this._active = true;
         this._id = ServerDevice.id++;
     }
-    Object.defineProperty(ServerDevice.prototype, "active", {
+    ServerDevice.prototype.kill = function () {
+        console.warn("🪦", "RIP DEVICE", this.id);
+        this.stop_dead_sentence();
+        this.stop_ping_timeout();
+        this.__dead__ = true;
+    };
+    Object.defineProperty(ServerDevice.prototype, "dead", {
         get: function () {
-            return this._active;
+            return this.__dead__;
         },
         enumerable: false,
         configurable: true
     });
+    Object.defineProperty(ServerDevice.prototype, "active", {
+        get: function () {
+            return this._active;
+        },
+        set: function (a) {
+            var _this = this;
+            if (this.dead)
+                throw new Error("NO");
+            if (a == false && this._active == true) {
+                console.log("DEACTIVATED", this.id);
+                this.inactivity_timeout = setTimeout(function () {
+                    //TODO: kill device
+                    _this.kill();
+                    console.warn("SERVER KILLED INACTIVE", _this.id);
+                }, ServerDevice.KILL_DEVICE_TIMEOUT);
+            }
+            if (a == true && this._active == false) {
+                console.log("REVIVING", this.id);
+                if (!this.inactivity_timeout)
+                    this.stop_dead_sentence();
+            }
+            this._active = a;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    ServerDevice.prototype.stop_dead_sentence = function () {
+        if (!this.inactivity_timeout)
+            return;
+        clearTimeout(this.inactivity_timeout);
+        this.inactivity_timeout = undefined;
+    };
     Object.defineProperty(ServerDevice.prototype, "id", {
         get: function () {
             return this._id;
@@ -171,27 +230,37 @@ var ServerDevice = exports.ServerDevice = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    //write a method ping that will run a method kill after 15 seconds but if ping is executed again the timer restarts
+    ServerDevice.prototype.stop_ping_timeout = function () {
+        if (!this.timeout)
+            return;
+        clearTimeout(this.timeout);
+        this.timeout = undefined;
+    };
     ServerDevice.prototype.ping = function () {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
             return __generator(this, function (_a) {
-                clearTimeout(this.timeout);
+                console.log('🏓', this.id, "pings");
+                this.stop_ping_timeout();
+                if (this.dead) {
+                    throw new Error("DEVICE IS DEAD");
+                }
                 if (!this._active) {
                     console.warn("should ping but not active - OLD DEVICE");
-                    return [2 /*return*/];
+                    // return;
                 }
-                else {
-                    console.log("PINGING", this.id, Date.now());
-                }
+                this.active = true;
+                // console.log("PINGING", this.id, Date.now());
                 this.timeout = setTimeout(function () {
-                    _this._active = false;
+                    console.warn("PING TIMEOUT FOR", _this.id);
+                    _this.active = false;
                 }, ServerDevice.PING_WAIT_TIMEOUT);
                 return [2 /*return*/];
             });
         });
     };
     ServerDevice.id = 0;
-    ServerDevice.PING_WAIT_TIMEOUT = 15000;
+    ServerDevice.PING_WAIT_TIMEOUT = 7500;
+    ServerDevice.KILL_DEVICE_TIMEOUT = 7500 * 5;
     return ServerDevice;
 }());

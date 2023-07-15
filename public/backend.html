@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>engine backend</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: space-evenly;
+        background-color: black;
+        color: white;
+      }
+
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="side" id="log">
+      <button id="restart">RESTART TIME</button>
+
+      <label for="master">
+        <input
+          type="range"
+          class="slider"
+          min="0"
+          max="100"
+          value="100"
+          id="master_volume"
+        />
+        <span></span>
+        <script>
+          function set_volume_label() {
+            const v = document.getElementById("master_volume").value;
+            document.getElementById(
+              "master_volume"
+            ).nextElementSibling.innerHTML = v;
+          }
+          document.getElementById("master_volume").oninput = set_volume_label;
+          set_volume_label();
+        </script>
+      </label>
+
+      <label>
+        <b>TIME</b>
+        <b>Tack time</b>
+        <ul>
+          <li>
+            <span id="time_log"></span>
+            <br><b>Loop n:</b><span id="loop_log"></span>
+          </li>
+        </ul>
+        <b>Request time</b>
+        <ul>
+          <li>
+            <small>LAST</small><br />
+            <span id="last_fetch_time"></span><br />
+          </li>
+          <li>
+            <small>AVERAGE</small>
+            <span id="avg_fetch_time"></span><br />
+          </li>
+        </ul>
+      </label>
+    </div>
+
+    <div class="side" id="tracks"></div>
+
+    <div class="side" id="devices"></div>
+
+    <script>
+      exports = {};
+    </script>
+    <script src="dependencies/jquery.js"></script>
+    <script src="dependencies/socket.io-client.js"></script>
+    <script src="backend.js"></script>
+  </body>
+</html>
