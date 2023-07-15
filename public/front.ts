@@ -75,14 +75,13 @@ export class ClientDevice {
   private error_log: HTMLElement;
   private track_log: HTMLElement;
 
-  private timeout: ReturnType<typeof setTimeout>;
 
-  private async kill() {
+  private async kill(str:string) {
     await this.fade_out();
     this.audio.pause();
     this.audio.src = "";
     this.audio.load();
-    this.status.innerHTML = "DEAD";
+    this.status.innerHTML = "DEAD by " + str ;
     throw new Error("DEAD");
   }
 
@@ -244,9 +243,11 @@ export class ClientDevice {
     });
   }
 
-  static PING_COUNT = 3;
-  static PING_TIMEOUT = 5000;
-  static PING_HOLD = 3000;
+  private timeout: ReturnType<typeof setTimeout>;
+
+  static PING_COUNT = 5;
+  static PING_TIMEOUT = 7500;
+  static PING_HOLD = 5000;
   private missed_pings = 0;
 
   private reset_timer() {
@@ -261,7 +262,7 @@ export class ClientDevice {
       this.error_log.innerHTML = "ERROR: NO PING #" + this.missed_pings;
       if (this.missed_pings > ClientDevice.PING_COUNT) {
         this.error_log.innerHTML = "ERROR: TOO MANY MISSED PINGS";
-        this.kill();
+        this.kill("missed pings");
       } else {
         this.reset_timer();
       }
@@ -280,6 +281,8 @@ export class ClientDevice {
     })
       .then((res) => res.json())
       .then(async (data: Vitals) => {
+        this.missed_pings = 0;
+        this.error_log.innerHTML = "";
         await this.check(data);
       });
     ////

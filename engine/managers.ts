@@ -42,7 +42,7 @@ export class TrackManager {
   public get preview_track() {
     return this._tracks.reduce((prev, curr) =>
       prev.instances < curr.instances ? prev : curr
-    );
+    )
   }
 
   public get pick_track() {
@@ -130,9 +130,9 @@ export class ServerDevice {
       return
     } else {
       console.log("PINGING", this.id, Date.now());
-      
     }
     this.timeout = setTimeout(() => {
+      console.warn("PING TIMEOUT FOR", this.id);
       this._active = false;
     }, ServerDevice.PING_WAIT_TIMEOUT);
   }
