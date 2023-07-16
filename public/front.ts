@@ -54,7 +54,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 //INIT
 async function init(data: setup_data) {
   console.log("INIT", data);
-  const { id, track, start_time, current_time } = data;†
+  const { id, track, start_time, current_time } = data;
 
   const device = new ClientDevice(
     id,
