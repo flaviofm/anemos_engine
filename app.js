@@ -39,9 +39,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.app = void 0;
 var osc_client_1 = require("./engine/osc_client");
 var managers_1 = require("./engine/managers");
+//INTI
 var express = require("express");
 var path = require("path");
 var ip = require("ip");
+var rateLimit = require('express-rate-limit');
 //SERVER
 exports.app = express();
 var port = 3000;
@@ -54,6 +56,13 @@ exports.app.use(bodyParser.urlencoded({
 exports.app.use(bodyParser.json());
 var cors = require("cors");
 exports.app.use(cors());
+var limiter = rateLimit({
+    windowMs: 20 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: true // Disable the `X-RateLimit-*` headers
+});
+exports.app.use(limiter);
 exports.app.get("/monitor_data", function (req, res) {
     //FIXME: non va bene una call al secondo intaserà
     // console.log("🪬 monitor");
@@ -105,12 +114,16 @@ exports.app.post("/vitals", function (req, res) { return __awaiter(void 0, void 
                 device_1.active = true;
             }
             if (device_1.dead) {
+                console.log("PINGING BUT DEAD", device_1.id);
                 DEVICES.splice(DEVICES.indexOf(device_1), 1);
                 TRACKS.release_track(device_1.track);
                 throw new Error("device not active. REMOVE");
             }
-            device_1.ping().catch(function (err) {
-                console.warn("🔴\t", err.message);
+            device_1.ping().then(function (res) {
+                console.log(device_1.id, "AFTER PING", res);
+            })
+                .catch(function (err) {
+                console.warn("🔴\t", device_1.id, err.message);
                 DEVICES.splice(DEVICES.indexOf(device_1), 1);
                 throw err;
             });

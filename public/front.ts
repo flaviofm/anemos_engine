@@ -54,7 +54,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 //INIT
 async function init(data: setup_data) {
   console.log("INIT", data);
-  const { id, track, start_time, current_time } = data;
+  const { id, track, start_time, current_time } = data;†
 
   const device = new ClientDevice(
     id,
@@ -264,26 +264,26 @@ export class ClientDevice {
 
   private timeout: ReturnType<typeof setTimeout>;
 
-  static PING_COUNT = 5;
-  static PING_TIMEOUT = 7500;
-  static PING_HOLD = 5000;
+  static PING_COUNT = 10;
+  static PING_TIMEOUT = 9500;
+  static PING_HOLD = 4000;
   private missed_pings = 0;
 
-  private reset_timer() {
-    console.log("RESETTING TIMEOUT");
-
+  private stop_timeout() {
     if (this.timeout) {
       console.debug("CLEARING TIMEOUT");
       window.clearTimeout(this.timeout);
     }
+  }
+
+  private reset_timer() {
+    console.log("RESETTING TIMEOUT");
     this.timeout = setTimeout(() => {
       this.missed_pings++;
       this.error_log.innerHTML = "ERROR: NO PING #" + this.missed_pings;
       if (this.missed_pings > ClientDevice.PING_COUNT) {
-        this.error_log.innerHTML = "ERROR: TOO MANY MISSED PINGS";
+        this.error_log.innerHTML = `ERROR: TOO MANY MISSED PINGS (${this.missed_pings})`;
         this.kill("missed pings");
-      } else {
-        this.reset_timer();
       }
     }, ClientDevice.PING_TIMEOUT);
   }
@@ -296,7 +296,13 @@ export class ClientDevice {
       },
       body: JSON.stringify(this.client_vitals),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        console.log(res, res.ok, res.status);
+        if(!res.ok) {
+          this.error_log.innerText = "SERVER IS THE KILLER"
+        }
+        return res.json()
+      })
       .then(async (data: Vitals) => {
         this.missed_pings = 0;
         this.error_log.innerHTML = "";
@@ -306,11 +312,12 @@ export class ClientDevice {
 
   public ping() {
     console.debug("PING");
-    this.reset_timer();
+    this.stop_timeout()
     const ping = this.ping_once();
     ////
     return ping.then(async (res) => {
       await this.delay(ClientDevice.PING_HOLD);
+      this.reset_timer();
       return res;
     });
   }

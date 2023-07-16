@@ -371,22 +371,21 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
             }, time);
         });
     };
-    ClientDevice.prototype.reset_timer = function () {
-        var _this = this;
-        console.log("RESETTING TIMEOUT");
+    ClientDevice.prototype.stop_timeout = function () {
         if (this.timeout) {
             console.debug("CLEARING TIMEOUT");
             window.clearTimeout(this.timeout);
         }
+    };
+    ClientDevice.prototype.reset_timer = function () {
+        var _this = this;
+        console.log("RESETTING TIMEOUT");
         this.timeout = setTimeout(function () {
             _this.missed_pings++;
             _this.error_log.innerHTML = "ERROR: NO PING #" + _this.missed_pings;
             if (_this.missed_pings > ClientDevice.PING_COUNT) {
-                _this.error_log.innerHTML = "ERROR: TOO MANY MISSED PINGS";
+                _this.error_log.innerHTML = "ERROR: TOO MANY MISSED PINGS (".concat(_this.missed_pings, ")");
                 _this.kill("missed pings");
-            }
-            else {
-                _this.reset_timer();
             }
         }, ClientDevice.PING_TIMEOUT);
     };
@@ -399,7 +398,13 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
             },
             body: JSON.stringify(this.client_vitals),
         })
-            .then(function (res) { return res.json(); })
+            .then(function (res) {
+            console.log(res, res.ok, res.status);
+            if (!res.ok) {
+                _this.error_log.innerText = "SERVER IS THE KILLER";
+            }
+            return res.json();
+        })
             .then(function (data) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -417,7 +422,7 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
     ClientDevice.prototype.ping = function () {
         var _this = this;
         console.debug("PING");
-        this.reset_timer();
+        this.stop_timeout();
         var ping = this.ping_once();
         ////
         return ping.then(function (res) { return __awaiter(_this, void 0, void 0, function () {
@@ -426,6 +431,7 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
                     case 0: return [4 /*yield*/, this.delay(ClientDevice.PING_HOLD)];
                     case 1:
                         _a.sent();
+                        this.reset_timer();
                         return [2 /*return*/, res];
                 }
             });
@@ -488,8 +494,8 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
         });
     };
     ClientDevice.ADJUST_THRESHOLD = 5; //seconds
-    ClientDevice.PING_COUNT = 5;
-    ClientDevice.PING_TIMEOUT = 7500;
-    ClientDevice.PING_HOLD = 5000;
+    ClientDevice.PING_COUNT = 10;
+    ClientDevice.PING_TIMEOUT = 9500;
+    ClientDevice.PING_HOLD = 4000;
     return ClientDevice;
 }());

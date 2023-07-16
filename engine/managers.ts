@@ -108,8 +108,8 @@ export class TimeManager {
 
 export class ServerDevice {
   static id = 0;
-  static PING_WAIT_TIMEOUT = 7500;
-  static KILL_DEVICE_TIMEOUT = 7500 * 5;
+  static PING_WAIT_TIMEOUT = 9500;
+  static KILL_DEVICE_TIMEOUT = ServerDevice.PING_WAIT_TIMEOUT * 5;
 
   private timeout: ReturnType<typeof setTimeout>;
 
@@ -138,7 +138,7 @@ export class ServerDevice {
   public set active(a: boolean) {
     if(this.dead) throw new Error("NO")
     if (a == false && this._active == true) {
-      console.log("DEACTIVATED", this.id);
+      console.log("DEACTIVATED", this.id, this._lastPing, Date.now());
       this.inactivity_timeout = setTimeout(() => {
         //TODO: kill device
         this.kill();
@@ -165,13 +165,25 @@ export class ServerDevice {
   }
 
   private stop_ping_timeout() {
+    
     if(!this.timeout) return
     clearTimeout(this.timeout)
     this.timeout = undefined!
+    console.log("STOPPED TIMEOUT", this.id);
   }
+
+  private _pinging = false;
+  private _lastPing : number
 
   public async ping() {
     console.log('🏓', this.id, "pings");
+    this._pinging = true
+    if(!!this._lastPing) {
+      console.log(this.id, "last ping", Date.now() - this._lastPing);
+      this._lastPing = Date.now()
+    } else {
+      this._lastPing = Date.now()
+    }
     
     this.stop_ping_timeout()
     
@@ -184,10 +196,17 @@ export class ServerDevice {
     }
     this.active = true
     // console.log("PINGING", this.id, Date.now());
+    console.log("running", this.id, "ping timeout");
     this.timeout = setTimeout(() => {
       console.warn("PING TIMEOUT FOR", this.id);
-      this.active = false;
+      if(!this._pinging) this.active = false;
+      else {
+        console.log("NOT HAPPENING PING WENT THROUGHN FOR", this.id);
+        
+      }
     }, ServerDevice.PING_WAIT_TIMEOUT);
+
+    this._pinging = false
     return
   }
 }

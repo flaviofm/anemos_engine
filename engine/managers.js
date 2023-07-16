@@ -169,6 +169,7 @@ var ServerDevice = exports.ServerDevice = /** @class */ (function () {
         this.__dead__ = false;
         //ACTIVE
         this._active = true;
+        this._pinging = false;
         this._id = ServerDevice.id++;
     }
     ServerDevice.prototype.kill = function () {
@@ -193,7 +194,7 @@ var ServerDevice = exports.ServerDevice = /** @class */ (function () {
             if (this.dead)
                 throw new Error("NO");
             if (a == false && this._active == true) {
-                console.log("DEACTIVATED", this.id);
+                console.log("DEACTIVATED", this.id, this._lastPing, Date.now());
                 this.inactivity_timeout = setTimeout(function () {
                     //TODO: kill device
                     _this.kill();
@@ -235,12 +236,21 @@ var ServerDevice = exports.ServerDevice = /** @class */ (function () {
             return;
         clearTimeout(this.timeout);
         this.timeout = undefined;
+        console.log("STOPPED TIMEOUT", this.id);
     };
     ServerDevice.prototype.ping = function () {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
             return __generator(this, function (_a) {
                 console.log('🏓', this.id, "pings");
+                this._pinging = true;
+                if (!!this._lastPing) {
+                    console.log(this.id, "last ping", Date.now() - this._lastPing);
+                    this._lastPing = Date.now();
+                }
+                else {
+                    this._lastPing = Date.now();
+                }
                 this.stop_ping_timeout();
                 if (this.dead) {
                     throw new Error("DEVICE IS DEAD");
@@ -251,16 +261,22 @@ var ServerDevice = exports.ServerDevice = /** @class */ (function () {
                 }
                 this.active = true;
                 // console.log("PINGING", this.id, Date.now());
+                console.log("running", this.id, "ping timeout");
                 this.timeout = setTimeout(function () {
                     console.warn("PING TIMEOUT FOR", _this.id);
-                    _this.active = false;
+                    if (!_this._pinging)
+                        _this.active = false;
+                    else {
+                        console.log("NOT HAPPENING PING WENT THROUGHN FOR", _this.id);
+                    }
                 }, ServerDevice.PING_WAIT_TIMEOUT);
+                this._pinging = false;
                 return [2 /*return*/];
             });
         });
     };
     ServerDevice.id = 0;
-    ServerDevice.PING_WAIT_TIMEOUT = 7500;
-    ServerDevice.KILL_DEVICE_TIMEOUT = 7500 * 5;
+    ServerDevice.PING_WAIT_TIMEOUT = 9500;
+    ServerDevice.KILL_DEVICE_TIMEOUT = ServerDevice.PING_WAIT_TIMEOUT * 5;
     return ServerDevice;
 }());

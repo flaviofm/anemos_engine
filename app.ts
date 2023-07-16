@@ -5,9 +5,12 @@ import {
   Track,
   TrackManager,
 } from "./engine/managers";
+
+//INTI
 const express = require("express");
 const path = require("path");
 const ip = require("ip");
+const rateLimit = require('express-rate-limit')
 
 //SERVER
 export const app = express();
@@ -26,6 +29,15 @@ app.use(bodyParser.json());
 
 const cors = require("cors");
 app.use(cors());
+
+
+const limiter = rateLimit({
+	windowMs: 20 * 60 * 1000,
+	max: 100,
+	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+	legacyHeaders: true // Disable the `X-RateLimit-*` headers
+})
+app.use(limiter)
 
 //SOCKET
 // Handle socket connection
@@ -105,12 +117,16 @@ app.post("/vitals", async (req, res) => {
       device.active = true;
     }
     if (device.dead) {
+      console.log("PINGING BUT DEAD", device.id);
       DEVICES.splice(DEVICES.indexOf(device), 1);
       TRACKS.release_track(device.track);
       throw new Error("device not active. REMOVE");
     }
-    device.ping().catch((err) => {
-      console.warn("🔴\t", err.message);
+    device.ping().then(res => {
+      console.log(device.id, "AFTER PING", res);
+    })
+    .catch((err) => {
+      console.warn("🔴\t", device.id, err.message);
       DEVICES.splice(DEVICES.indexOf(device), 1);
       throw err
     })
