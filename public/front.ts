@@ -2,53 +2,40 @@ import { Vitals, setup_data } from "../app";
 import { Track } from "../engine/managers";
 
 console.log("FRONTEND");
-var PROCESS!: Promise<ClientDevice>;
+var PROCESS: () => Promise<setup_data> = () =>
+  fetch("/setup").then((res) => {
+    console.debug(res, res.ok, res.status, res.statusText);
+    return res.json();
+  });
+
+const play_btns = Array.from(document.getElementsByClassName("play"));
 
 window.addEventListener("DOMContentLoaded", async () => {
-  PROCESS = fetch("/setup")
-    .then((res) => {
-      console.debug(res, res.ok, res.status, res.statusText);
-      return res.json();
-    })
-    .then((data: setup_data) => init(data))
-    .then(async (device) => {
-      console.log("DEVICE CREATED", device);
-      await device.setup();
-      return device;
-    })
-    .then((device) => {
-      return device;
-    });
+  document.getElementById('over')?.classList.add('active')
+  await landing_scene();
+  const res = await PROCESS();
+  const device = await init(res);
+  const ok = await device.setup();
+  console.warn("INITED");
+  await ready_scene();
 
-  await PROCESS;
-
-  const playbtn = document.getElementById("play");
-  if (!playbtn) throw new Error("NO PLAY BUTTON");
-  playbtn.classList.add("active");
-
-  playbtn.addEventListener("click", () => {
-    const ping_log = document.getElementById("ping") as HTMLElement;
-    PROCESS.then(async (device) => {
-      device.play();
-      ping_log.classList.add("active");
-      try {
-        while (true) {
-          console.warn("PINGING");
-          await device.ping();
-        }
-      } catch (err) {
-        ping_log.style.backgroundColor = "red";
-        return false;
+  play_btns.forEach((e) =>
+    e.addEventListener("click", async () => {
+      var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      if (isSafari) {
+        device.play();
+        device.pause();
       }
+
+      // waiting_scene()
+      document.getElementById('landing')!.classList.remove("active");
+
+      play_btns.forEach((e) => e.classList.remove("active"));
+      await device.ping_once();
+
+      device.play();
     })
-      .then((res) => {
-        ping_log.classList.remove("active");
-        console.log("PROCESS ENDED", res);
-      })
-      .catch((err) => {
-        console.log("PROCESS ERROR", err);
-      });
-  });
+  );
 });
 
 //INIT
@@ -67,6 +54,9 @@ async function init(data: setup_data) {
 }
 
 export class ClientDevice {
+  pause() {
+    this.audio.pause();
+  }
   static ADJUST_THRESHOLD = 5; //seconds
 
   private audio: HTMLAudioElement;
@@ -74,15 +64,6 @@ export class ClientDevice {
   private status: HTMLElement;
   private error_log: HTMLElement;
   private track_log: HTMLElement;
-
-  private async kill(str: string) {
-    await this.fade_out();
-    this.audio.pause();
-    this.audio.src = "";
-    this.audio.load();
-    this.status.innerHTML = "DEAD by " + str;
-    throw new Error("DEAD");
-  }
 
   constructor(
     private id: number,
@@ -106,35 +87,13 @@ export class ClientDevice {
       "SETTING UP",
       this.id,
       this.track.label,
-      this.current_playback_time
+      this.audio.currentTime
     );
     await this.set_track(this.track);
-    await this.set_time(this.current_playback_time);
+    // await this.set_time(this.current_playback_time);
     console.log("SETTED UP", this.audio.src, this.audio.currentTime);
 
     return true;
-  }
-
-  private get offset() {
-    // console.log("OFFSET", this.server_start_time, this.client_start_time);
-
-    // return this.server_start_time - this.client_start_time;
-    return 0;
-  }
-
-  private get current_client_time() {
-    return Date.now();
-  }
-
-  private get current_playback_time() {
-    return this.audio.currentTime;
-    // return (
-    //   (this.current_client_time -
-    //     this.client_start_time +
-    //     this.server_current_time -
-    //     this.server_start_time) /
-    //   1000
-    // );
   }
 
   private set_track(t: Track) {
@@ -142,7 +101,7 @@ export class ClientDevice {
     console.log(src);
 
     return new Promise(async (resolve, reject) => {
-      await this.fade_out();
+      // await this.fade_out();
 
       this.track = t;
       this.audio.src = src;
@@ -150,8 +109,9 @@ export class ClientDevice {
       this.track_log.innerHTML = "TRACK: " + this.track.label;
       //when the audio is ready to play
       this.audio.oncanplay = () => {
-        this.fade_in();
-        // this.play()
+        // play_btns.forEach(e => e.classList.add("active"))
+        ready_scene();
+
         resolve(true);
       };
     });
@@ -159,33 +119,20 @@ export class ClientDevice {
 
   public async play() {
     if (this.audio.src == "") throw new Error("NO TRACK");
-    // if (!this.audio.paused) {
-    //   console.warn("ALREADY PLAYING");
-    //   return
-    // }
-    //CHECKS TIME - qua controlla manualmente ma i ping confermeranno
-    // this.ping_once();
-    this.set_time(this.computed_current_track_time);
-
     try {
+      console.warn("PLAY");
       await this.audio.play();
+      console.warn("PLAYING");
     } catch (err) {
-      console.log("NOT TIME YET");
+      console.log("NOT TIME YET", err);
       return;
     }
-    // this.audio.play();
     this.status.innerHTML = "PLAYING";
-    // if (this.audio.volume === 0) {
-    //   await this.fade_in();
-    // }
   }
 
   private async set_time(time: number) {
-    await this.fade_out();
-
-    this.audio.currentTime = time - this.offset;
+    this.audio.currentTime = time;
     // this.play();
-    await this.fade_in();
   }
 
   private get audio_current_time() {
@@ -216,123 +163,62 @@ export class ClientDevice {
   private get client_vitals(): Vitals {
     return {
       start_time: this.server_start_time,
-      current_time: this.current_client_time,
-      current_track_time: this.current_playback_time,
+      current_time: Date.now(),
+      current_track_time: this.audio.currentTime,
       track: this.track,
       id: this.id,
     };
   }
 
-  private fade_in() {
-    this.log.innerHTML = "FADING IN";
-    return new Promise((resolve, reject) => {
-      //animate audio volume from 0 to 1 iin 2 seconds
-      this.audio.volume = 1;
-      // this.audio.play();
-      // $(this.audio)
-      //   .animate(
-      //     { volume: 1 }, 2000
-      //   )
-      //   .on("finish", () => {
-      resolve(true);
-      //   });
-    });
-  }
-  private fade_out() {
-    this.log.innerHTML = "FADING OUT";
-    return new Promise((resolve, reject) => {
-      //animate audio volume from 0 to 1 iin 2 seconds
-      this.audio.volume = 0;
-      // this.audio.play();
+  public delay(time: number = 2000) {
+    console.warn("DELAY OF ", time);
 
-      // $(this.audio)
-      //   .animate({ volume: 0 }, 2000)
-      //   .on("finish", () => {
-      //     this.log.innerHTML = "FADED OUT";
-      resolve(true);
-      //   });
-    });
-  }
-
-  private delay(time: number = 2000) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
+        console.warn("DELAYED ", time);
         resolve(true);
       }, time);
     });
   }
 
-  private timeout: ReturnType<typeof setTimeout>;
-
-  static PING_COUNT = 10;
-  static PING_TIMEOUT = 9500;
-  static PING_HOLD = 4000;
-  private missed_pings = 0;
-
-  private stop_timeout() {
-    if (this.timeout) {
-      console.debug("CLEARING TIMEOUT");
-      window.clearTimeout(this.timeout);
-    }
-  }
-
-  private reset_timer() {
-    console.log("RESETTING TIMEOUT");
-    this.timeout = setTimeout(() => {
-      this.missed_pings++;
-      this.error_log.innerHTML = "ERROR: NO PING #" + this.missed_pings;
-      if (this.missed_pings > ClientDevice.PING_COUNT) {
-        this.error_log.innerHTML = `ERROR: TOO MANY MISSED PINGS (${this.missed_pings})`;
-        this.kill("missed pings");
-      }
-    }, ClientDevice.PING_TIMEOUT);
-  }
-
-  private ping_once() {
-    return fetch("/vitals", {
+  public async ping_once() {
+    const res = await fetch("/vitals", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(this.client_vitals),
-    })
-      .then((res) => {
-        console.log(res, res.ok, res.status);
-        if(!res.ok) {
-          this.error_log.innerText = "SERVER IS THE KILLER"
-        }
-        return res.json()
-      })
-      .then(async (data: Vitals) => {
-        this.missed_pings = 0;
-        this.error_log.innerHTML = "";
-        await this.check(data);
-      });
-  }
-
-  public ping() {
-    console.debug("PING");
-    this.stop_timeout()
-    const ping = this.ping_once();
-    ////
-    return ping.then(async (res) => {
-      await this.delay(ClientDevice.PING_HOLD);
-      this.reset_timer();
-      return res;
+    }).then((res) => {
+      console.log(res, res.ok, res.status);
+      if (!res.ok) {
+        this.error_log.innerText = "SERVER IS THE KILLER";
+      }
+      return res.json();
     });
+    const client_vitals = this.client_vitals;
+
+    return await this.check_time(client_vitals, res);
+    // .then(async (data: Vitals) => {
+    //   // this.missed_pings = 0;
+    //   // this.error_log.innerHTML = "";
+    //   // await this.check(data);
+    //   const client_vitals = this.client_vitals;
+
+    //   return await this.check_time(client_vitals, data);
+    // });
   }
 
-  private check(server_vitals: Vitals) {
-    const client_vitals = this.client_vitals;
-    return Promise.all([
-      this.check_time(client_vitals, server_vitals),
-      this.check_track(client_vitals, server_vitals),
-      //TODO: Add checks here
-    ]);
-  }
+  // private check(server_vitals: Vitals) {
+  //   const client_vitals = this.client_vitals;
+  //   return Promise.all([
+  //     this.check_time(client_vitals, server_vitals),
+  //     this.check_track(client_vitals, server_vitals),
+  //     //TODO: Add checks here
+  //   ]);
+  // }
 
   private async check_time(client_vitals: Vitals, server_vitals: Vitals) {
-    const server_track_time = server_vitals.current_track_time/1000;
+    const server_track_time = server_vitals.current_track_time / 1000;
     const client_track_time = client_vitals.current_track_time;
 
     const difference = server_track_time - client_track_time;
@@ -342,30 +228,45 @@ export class ClientDevice {
       server_track_time,
       client_track_time
     );
-    if (
-      difference > ClientDevice.ADJUST_THRESHOLD ||
-      difference < -ClientDevice.ADJUST_THRESHOLD
-    ) {
-      //adjust
-      console.log("ADJUSTING TIME");
-      return this.set_time(server_track_time);
-    } else {
-      console.log("TIME OK");
+    // if (
+    //   difference > ClientDevice.ADJUST_THRESHOLD ||
+    //   difference < -ClientDevice.ADJUST_THRESHOLD
+    // ) {
+    //adjust
+    console.log("ADJUSTING TIME");
+
+    const countdown = 120; //seconds
+
+    console.error(server_track_time);
+
+    if (server_track_time < countdown) {
+      
+      waiting_scene();
+
+      console.warn("COUNTDOWN", countdown - server_track_time);
+      this.status.innerHTML = "COUNTDOWN OF " + (countdown - server_track_time);
+
+      //UI
+      const cd_div = document.getElementById("countdown")!;
+      let count = Math.floor(countdown - server_track_time);
+      const inter = setInterval(() => {
+        cd_div.innerHTML = `inizierà tra ${count} secondi`;
+        count--;
+        if (count <= 0) {
+          clearInterval(inter);
+          // playing_scene();
+        }
+      }, 1000);
+
+      await this.delay((countdown - server_track_time) * 1000);
+      // return await this.set_time(server_track_time);
     }
 
-    // //checks difference between client and server time
-    // const client_time = client_vitals.current_time - client_vitals.start_time;
-    // const server_time = server_vitals.current_time - server_vitals.start_time;
-    // const offset = client_time - server_time;
+    playing_scene()
 
-    // const time_difference = client_time - server_time;
-    // if (
-    //   time_difference > ClientDevice.ADJUST_THRESHOLD ||
-    //   time_difference < -ClientDevice.ADJUST_THRESHOLD
-    // ) {
-    //   //adjust
-    //   console.log("ADJUSTING TIME");
-    //   return this.set_time(server_time);
+    return await this.set_time(server_track_time - countdown);
+    // } else {
+    //   console.log("TIME OK");
     // }
 
     return;
@@ -381,4 +282,59 @@ export class ClientDevice {
     console.log("TRACK OK");
     return;
   }
+}
+
+////
+
+//////SCENES
+//////////MAIN INDEX
+// function get_play_btns() {
+//   return [
+//     document.getElementById("play_btn")!,
+//     document.getElementById("play_btn_debug")!,
+//   ];
+// }
+function delay(ms: number) {
+  return new Promise((succ, rej) => setTimeout(() => succ(true), ms));
+}
+function set_section(id: string) {
+  console.log(id);
+
+  const secs = Array.from(document.getElementsByTagName("section"));
+  secs.forEach((e) => {
+    if (e.id == id) e.classList.add("active");
+    else e.classList.remove("active");
+  });
+}
+async function landing_scene() {
+  delay(1000)
+    .then(() => {
+      set_section("landing");
+      console.log("1");
+    })
+    .then(async () => {
+      return await delay(3000).then((res) => {
+        console.log("2");
+        document.getElementById("landing")?.classList.add("ready");
+      });
+    });
+}
+async function ready_scene() {
+  console.warn("READY");
+  // set_section("ready");
+  play_btns.forEach((b) => b.classList.add("active"));
+  // play_btns.forEach((b) => b.classList.add("active"));
+  //TODO: pagina con il tasto play
+}
+async function waiting_scene() {
+  console.warn('waiting');
+  
+  set_section("wait");
+
+  //TODO: pagina con presentazione artisti
+}
+async function playing_scene() {
+  set_section("playing");
+
+  //TODO: schermata mentre c'è play
 }

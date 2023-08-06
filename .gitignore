@@ -1,5 +1,2 @@
 .DS_Store
-*.mp3
-engine/*.js
 node_modules/
-public/*.js

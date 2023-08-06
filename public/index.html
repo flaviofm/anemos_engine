@@ -2,8 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Music Player</title>
+    <meta name="viewport" 
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Costellazioni</title>
     <style>
+
+    .debug {
+      display: none!important;
+    }
+
       body {
         background: black;
         display: flex;
@@ -68,9 +75,11 @@
         }
       }
     </style>
+    <link rel="stylesheet" href="style.css" />
+
   </head>
   <body>
-    <div>
+    <div class="debug">
       <h1 id="log">LOG</h1>
       <h2 id="status">STATUS</h2>
       <h3 id="track_log" style="color: green"></h3>
@@ -80,15 +89,39 @@
       <div id="ping"></div>
       <br />
       <br />
-      <button class="btn" id="play">play</button>
+      <button class="btn play">play</button>
+      <audio id="audio" controls></audio>
     </div>
-    <audio id="audio" loop controls></audio>
+
+
+    <!-- SECTIONS -->
+    <section id="over"></section>
+    <section id="landing">
+      <h1>Costellazioni</h1>
+      <h5><br>Cristian Rizzuti / Max Magaldi</h5>
+      
+      <button class="play"><?xml version="1.0" encoding="UTF-8"?><svg width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M6.906 4.537A.6.6 0 006 5.053v13.894a.6.6 0 00.906.516l11.723-6.947a.6.6 0 000-1.032L6.906 4.537z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+
+      <img src="res/Logotipo_Bianco.png">
+    </section>
+    <!-- <section id="ready">
+    </section> -->
+    <section id="wait">
+      <h1>Costellazioni</h1>
+      <h3 id="countdown">inizierà tra</h3>
+    </div>
+    </section>
+    <section id="playing">
+      <h3>Ora sei parte</h3><h2>del suono di</h2><h1>Costellazioni</h1>
+    </div>
+    </section>
+
 
 
     <script>
       var exports = {};
     </script>
-    <script src="jquery.js"></script>
-    <script src="front.js"></script>
+    <!-- <script src="jquery.js"></script> -->
+    <script src="front.js?3"></script>
   </body>
 </html>

@@ -37,8 +37,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.app = void 0;
-var osc_client_1 = require("./engine/osc_client");
 var managers_1 = require("./engine/managers");
+var osc_client_1 = require("./engine/osc_client");
 //INTI
 var express = require("express");
 var path = require("path");
@@ -152,8 +152,10 @@ function start_server(port) {
             //TIME
             TIME.build(TRACKS.duration);
             //OSC
-            (0, osc_client_1.startScene)();
-            console.debug("▶️\tOSC", "osc sent");
+            setTimeout(function () {
+                (0, osc_client_1.startScene)();
+                console.debug("▶️\tOSC", "osc sent");
+            }, 120 * 1000);
         });
     }
     catch (err) {

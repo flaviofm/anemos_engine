@@ -1,10 +1,10 @@
-import { startScene as osc_start } from "./engine/osc_client";
 import {
   ServerDevice,
   TimeManager,
   Track,
   TrackManager,
 } from "./engine/managers";
+import { startScene as osc_start } from "./engine/osc_client";
 
 //INTI
 const express = require("express");
@@ -155,8 +155,10 @@ function start_server(port: number) {
       //TIME
       TIME.build(TRACKS.duration);
       //OSC
-      osc_start();
-      console.debug("▶️\tOSC", "osc sent");
+      setTimeout(()=> {
+        osc_start();
+        console.debug("▶️\tOSC", "osc sent");
+      }, 120*1000)
     });
   } catch (err) {
     start_server(port + 1);

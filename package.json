@@ -1,7 +1,8 @@
 {
   "scripts": {
-    "build": "tsc ./engine/*.ts;tsc ./public/*.ts;tsc *.ts;",
-    "build-watch": "tsc ./engine/*.ts ./public/*.ts *.ts --watch",
+    "test": "npm run build && npm run start",
+    "build": "tsc ./engine/*.ts;tsc ./public/*.ts;tsc *.ts --watch && sass public/",
+    "build-watch": "tsc --watch ./engine/*.ts ./public/*.ts *.ts --watch & sass --watch public/",
     "start": "node app.js"
   },
   "dependencies": {

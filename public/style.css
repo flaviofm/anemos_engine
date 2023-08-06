@@ -1,0 +1,191 @@
+html {
+  background-color: black;
+}
+
+body {
+  align-items: center;
+  gap: 1em;
+  background-color: black;
+  color: white;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+#logs {
+  align-items: center;
+}
+#logs {
+  display: flex;
+  flex-direction: column;
+}
+
+/* sections */
+section {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  padding: 60px 20px 90px 20px;
+  opacity: 0;
+  pointer-events: none;
+  touch-action: none;
+}
+section.active {
+  opacity: 1;
+  pointer-events: all;
+  touch-action: auto;
+}
+
+#landing {
+  align-items: center;
+  text-align: center;
+  justify-content: flex-start;
+  opacity: 0;
+  pointer-events: none;
+}
+#landing {
+  display: flex;
+  flex-direction: column;
+}
+#landing {
+  transition: all 0.3s ease;
+}
+#landing.active {
+  pointer-events: all;
+  opacity: 1;
+}
+#landing * {
+  transition: all 0.3s ease;
+}
+#landing button.play {
+  opacity: 0;
+  background-color: transparent;
+  border: none;
+  color: white;
+  width: 30vw;
+  height: 30vw;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+#landing button.play {
+  display: flex;
+  flex-direction: column;
+}
+#landing button.play svg {
+  width: 100%;
+  height: auto;
+}
+#landing h1 {
+  opacity: 0;
+  transition-delay: 650ms !important;
+  margin-bottom: 0;
+}
+#landing h5 {
+  opacity: 0;
+  transition-delay: 1250ms !important;
+}
+#landing img {
+  opacity: 0;
+  transition-delay: 1250ms !important;
+}
+#landing.active h1, #landing.active h5, #landing.active img {
+  opacity: 1;
+}
+#landing.ready button {
+  opacity: 1;
+}
+#landing img {
+  width: 50%;
+  margin-top: auto;
+}
+
+#wait {
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+#wait {
+  display: flex;
+  flex-direction: column;
+}
+#wait {
+  transition: all 0.3s ease;
+}
+#wait #countdown {
+  content: "";
+  transition-delay: 1100ms !important;
+}
+#wait h1, #wait h3 {
+  opacity: 0;
+}
+#wait h1, #wait h3 {
+  transition: all 0.3s ease;
+}
+#wait.active {
+  opacity: 1;
+}
+#wait.active h1, #wait.active h3 {
+  opacity: 1;
+}
+
+#playing {
+  transition-delay: 1100ms !important;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+#playing {
+  transition: all 0.3s ease;
+}
+#playing {
+  display: flex;
+  flex-direction: column;
+}
+#playing h1, #playing h2, #playing h3 {
+  opacity: 0;
+}
+#playing h1, #playing h2, #playing h3 {
+  transition: all 0.3s ease;
+}
+#playing h1 {
+  transition-delay: 1500ms !important;
+}
+#playing h2 {
+  transition-delay: 1000ms !important;
+}
+#playing h3 {
+  transition-delay: 500ms !important;
+}
+#playing.active {
+  opacity: 1;
+}
+#playing.active h1, #playing.active h2, #playing.active h3 {
+  opacity: 1;
+}
+
+#over {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: black;
+}
+#over.active {
+  display: none !important;
+}
+
+/*# sourceMappingURL=style.css.map */
