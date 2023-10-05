@@ -1,4 +1,3 @@
-import { setup_data } from "../app";
 const getMP3Duration = require("get-mp3-duration");
 
 export interface Track {
@@ -19,11 +18,27 @@ export class TrackManager {
     const tracks_path = path.join(__dirname, "../public/tracks");
     const files = fs.readdirSync(tracks_path);
     files
-      .filter((file: string) => path.extname(file) === ".mp3")
+      .filter((file: string) => path.extname(file) === ".mp4")
       .sort()
-      .forEach((file: string, index: number) => {
+      .forEach(async (file: string, index: number) => {
         const buffer = fs.readFileSync(path.join(tracks_path, file));
-        const duration = getMP3Duration(buffer);
+        // const duration = getMP3Duration(buffer);
+
+        const v = document.createElement("video");
+        v.preload = "metadata";
+        v.src = "/tracks/" + file;
+
+        const duration = await new Promise<number>((succ, rej) => {
+          v.addEventListener("loadedmetadata", () => {
+            window.URL.revokeObjectURL(v.src);
+            succ(v.duration);
+          });
+          v.load()
+        })
+
+        console.log("DURATION", duration);
+        
+
         const track: Track = {
           id: index,
           src: file,

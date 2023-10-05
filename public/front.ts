@@ -72,7 +72,7 @@ export class ClientDevice {
     private server_start_time: number,
     private server_current_time: number
   ) {
-    this.audio = document.getElementById("audio") as HTMLAudioElement;
+    this.audio = document.getElementById("audio") as HTMLVideoElement;
     this.log = document.getElementById("log") as HTMLElement;
     this.status = document.getElementById("status") as HTMLElement;
     this.error_log = document.getElementById("error_log") as HTMLElement;
@@ -253,6 +253,7 @@ export class ClientDevice {
         cd_div.innerHTML = `inizierà tra ${count} secondi`;
         count--;
         if (count <= 0) {
+          // @ts-ignore
           clearInterval(inter);
           // playing_scene();
         }

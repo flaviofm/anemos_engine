@@ -321,6 +321,7 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
                             cd_div_1.innerHTML = "inizier\u00E0 tra ".concat(count_1, " secondi");
                             count_1--;
                             if (count_1 <= 0) {
+                                // @ts-ignore
                                 clearInterval(inter_1);
                                 // playing_scene();
                             }

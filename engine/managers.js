@@ -57,7 +57,7 @@ var TrackManager = /** @class */ (function () {
         var tracks_path = path.join(__dirname, "../public/tracks");
         var files = fs.readdirSync(tracks_path);
         files
-            .filter(function (file) { return path.extname(file) === ".mp3"; })
+            .filter(function (file) { return path.extname(file) === ".mp4"; })
             .sort()
             .forEach(function (file, index) {
             var buffer = fs.readFileSync(path.join(tracks_path, file));
