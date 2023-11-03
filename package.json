@@ -2,6 +2,8 @@
   "scripts": {
     "test": "npm run build && npm run start",
     "build": "tsc ./engine/*.ts;tsc ./public/*.ts;tsc *.ts",
+    "build-style": "sass public/",
+    "build-local": "npm run build && npm run build-style",
     "build-watch": "tsc --watch ./engine/*.ts ./public/*.ts *.ts --watch & sass --watch public/",
     "start": "node app.js"
   },
