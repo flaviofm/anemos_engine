@@ -1,7 +1,7 @@
 {
   "scripts": {
     "test": "npm run build && npm run start",
-    "build": "tsc ./engine/*.ts;tsc ./public/*.ts;tsc *.ts --watch && sass public/",
+    "build": "tsc ./engine/*.ts;tsc ./public/*.ts;tsc *.ts && sass public/",
     "build-watch": "tsc --watch ./engine/*.ts ./public/*.ts *.ts --watch & sass --watch public/",
     "start": "node app.js"
   },
@@ -12,6 +12,7 @@
     "express-rate-limit": "^6.7.1",
     "ffprobe": "^1.1.2",
     "get-mp3-duration": "^1.0.0",
+    "get-video-duration": "^4.1.0",
     "ip": "^1.1.8",
     "jquery": "^3.7.0",
     "jsdom": "^22.1.0",

@@ -90,7 +90,10 @@ export interface Vitals {
   id?: number;
 }
 //MANAGER
-const TRACKS = new TrackManager();
+// const TRACKS = new TrackManager();
+let TRACKS !: TrackManager
+
+
 const TIME = new TimeManager();
 const DEVICES: ServerDevice[] = [];
 //API
@@ -137,6 +140,8 @@ app.post("/vitals", async (req, res) => {
       current_track_time: TIME.current_track_time,
       track: track,
     };
+    console.log("vitals", check_data);
+    
     res.send(check_data);
   } catch (err) {
     res.status(501, err.message);
@@ -153,16 +158,18 @@ function start_server(port: number) {
         `🌈\tServer started at http://${serverIp}:${port}\nBACKEND at: http://${serverIp}:${port}/backend.html\n`
       );
       //TIME
+      console.debug("duration2", TRACKS.duration);
+      
       TIME.build(TRACKS.duration);
       //OSC
       setTimeout(()=> {
         osc_start();
         console.debug("▶️\tOSC", "osc sent");
-      }, 120*1000)
+      }, 20 * 1000) //COUNTDOWN
     });
   } catch (err) {
     start_server(port + 1);
   }
 }
 
-start_server(3333);
+TrackManager.build().then(res => { TRACKS = res }).then(()=>start_server(3333));

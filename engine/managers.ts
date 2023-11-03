@@ -1,4 +1,5 @@
 const getMP3Duration = require("get-mp3-duration");
+const { getVideoDurationInSeconds } = require("get-video-duration");
 
 export interface Track {
   id: number;
@@ -12,31 +13,37 @@ export class TrackManager {
   private _tracks: Array<Track> = [];
   private start_time = Date.now();
 
-  constructor() {
+  static async build() {
+    const n = new TrackManager();
     const fs = require("fs");
     const path = require("path");
     const tracks_path = path.join(__dirname, "../public/tracks");
-    const files = fs.readdirSync(tracks_path);
-    files
+    const files = fs.readdirSync(tracks_path) as string[];
+    await Promise.all(files
       .filter((file: string) => path.extname(file) === ".mp4")
       .sort()
-      .forEach(async (file: string, index: number) => {
-        const buffer = fs.readFileSync(path.join(tracks_path, file));
+      .map(async (file: string, index: number) => {
+        // const buffer = fs.readFileSync(path.join(tracks_path, file));
         // const duration = getMP3Duration(buffer);
+        const p = path.join(tracks_path, file)
+        console.log(p);
+        
+        const duration = (await getVideoDurationInSeconds(p)) * 1000;
 
-        const v = document.createElement("video");
-        v.preload = "metadata";
-        v.src = "/tracks/" + file;
+        // const v = document.createElement("video");
+        // v.preload = "metadata";
+        // v.src = "/tracks/" + file;
 
-        const duration = await new Promise<number>((succ, rej) => {
-          v.addEventListener("loadedmetadata", () => {
-            window.URL.revokeObjectURL(v.src);
-            succ(v.duration);
-          });
-          v.load()
-        })
+        // const duration = await new Promise<number>((succ, rej) => {
+        //   v.addEventListener("loadedmetadata", () => {
+        //     window.URL.revokeObjectURL(v.src);
+        //     succ(v.duration);
+        //   });
+        //   v.load()
+        // })
 
         console.log("DURATION", duration);
+        
         
 
         const track: Track = {
@@ -46,10 +53,16 @@ export class TrackManager {
           instances: 0,
           duration: duration,
         };
-        this._tracks.push(track);
-      });
-    console.debug("TRACK LOADED", ...this._tracks.map((t) => t.label));
+        console.log("TRACK", track);
+        
+        n._tracks.push(track);
+        return
+      }))
+    console.debug("TRACK LOADED", ...n._tracks.map((t) => t.label));
+    return n
   }
+
+  private constructor() {}
 
   public get preview_track() {
     return this._tracks.reduce((prev, curr) =>
@@ -69,6 +82,8 @@ export class TrackManager {
   }
 
   public get duration() {
+    console.log("TRACK LENG", this._tracks.length);
+    
     if (this._tracks.length === 0) return 0;
     return this._tracks[0].duration;
   }
@@ -106,6 +121,8 @@ export class TimeManager {
   }
 
   public get current_track_time() {
+    console.warn("current track time", this.current_server_time, this.duration, this.current_loop);
+    
     // console.log("current time", this.current_server_time, this.duration, this.current_loop);
     const res = this.current_server_time - this.duration * this.current_loop;
     // console.log("=", res);

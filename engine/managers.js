@@ -47,32 +47,69 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServerDevice = exports.TimeManager = exports.TrackManager = void 0;
 var getMP3Duration = require("get-mp3-duration");
+var getVideoDurationInSeconds = require("get-video-duration").getVideoDurationInSeconds;
 var TrackManager = /** @class */ (function () {
     function TrackManager() {
-        var _this = this;
         this._tracks = [];
         this.start_time = Date.now();
-        var fs = require("fs");
-        var path = require("path");
-        var tracks_path = path.join(__dirname, "../public/tracks");
-        var files = fs.readdirSync(tracks_path);
-        files
-            .filter(function (file) { return path.extname(file) === ".mp4"; })
-            .sort()
-            .forEach(function (file, index) {
-            var buffer = fs.readFileSync(path.join(tracks_path, file));
-            var duration = getMP3Duration(buffer);
-            var track = {
-                id: index,
-                src: file,
-                label: file,
-                instances: 0,
-                duration: duration,
-            };
-            _this._tracks.push(track);
-        });
-        console.debug.apply(console, __spreadArray(["TRACK LOADED"], this._tracks.map(function (t) { return t.label; }), false));
     }
+    TrackManager.build = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var n, fs, path, tracks_path, files;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        n = new TrackManager();
+                        fs = require("fs");
+                        path = require("path");
+                        tracks_path = path.join(__dirname, "../public/tracks");
+                        files = fs.readdirSync(tracks_path);
+                        return [4 /*yield*/, Promise.all(files
+                                .filter(function (file) { return path.extname(file) === ".mp4"; })
+                                .sort()
+                                .map(function (file, index) { return __awaiter(_this, void 0, void 0, function () {
+                                var p, duration, track;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0:
+                                            p = path.join(tracks_path, file);
+                                            console.log(p);
+                                            return [4 /*yield*/, getVideoDurationInSeconds(p)];
+                                        case 1:
+                                            duration = (_a.sent()) * 1000;
+                                            // const v = document.createElement("video");
+                                            // v.preload = "metadata";
+                                            // v.src = "/tracks/" + file;
+                                            // const duration = await new Promise<number>((succ, rej) => {
+                                            //   v.addEventListener("loadedmetadata", () => {
+                                            //     window.URL.revokeObjectURL(v.src);
+                                            //     succ(v.duration);
+                                            //   });
+                                            //   v.load()
+                                            // })
+                                            console.log("DURATION", duration);
+                                            track = {
+                                                id: index,
+                                                src: file,
+                                                label: file,
+                                                instances: 0,
+                                                duration: duration,
+                                            };
+                                            console.log("TRACK", track);
+                                            n._tracks.push(track);
+                                            return [2 /*return*/];
+                                    }
+                                });
+                            }); }))];
+                    case 1:
+                        _a.sent();
+                        console.debug.apply(console, __spreadArray(["TRACK LOADED"], n._tracks.map(function (t) { return t.label; }), false));
+                        return [2 /*return*/, n];
+                }
+            });
+        });
+    };
     Object.defineProperty(TrackManager.prototype, "preview_track", {
         get: function () {
             return this._tracks.reduce(function (prev, curr) {
@@ -97,6 +134,7 @@ var TrackManager = /** @class */ (function () {
     };
     Object.defineProperty(TrackManager.prototype, "duration", {
         get: function () {
+            console.log("TRACK LENG", this._tracks.length);
             if (this._tracks.length === 0)
                 return 0;
             return this._tracks[0].duration;
@@ -138,6 +176,7 @@ var TimeManager = /** @class */ (function () {
     });
     Object.defineProperty(TimeManager.prototype, "current_track_time", {
         get: function () {
+            console.warn("current track time", this.current_server_time, this.duration, this.current_loop);
             // console.log("current time", this.current_server_time, this.duration, this.current_loop);
             var res = this.current_server_time - this.duration * this.current_loop;
             // console.log("=", res);

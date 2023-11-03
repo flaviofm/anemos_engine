@@ -270,11 +270,15 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
                             },
                             body: JSON.stringify(this.client_vitals),
                         }).then(function (res) {
+                            console.warn("VITALS", res);
                             console.log(res, res.ok, res.status);
                             if (!res.ok) {
                                 _this.error_log.innerText = "SERVER IS THE KILLER";
                             }
                             return res.json();
+                        }).then(function (x) {
+                            console.log(x);
+                            return x;
                         })];
                     case 1:
                         res = _a.sent();
@@ -299,6 +303,7 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        console.warn("CHECK VITALS", client_vitals, server_vitals);
                         server_track_time = server_vitals.current_track_time / 1000;
                         client_track_time = client_vitals.current_track_time;
                         difference = server_track_time - client_track_time;
@@ -309,8 +314,8 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
                         // ) {
                         //adjust
                         console.log("ADJUSTING TIME");
-                        countdown = 120;
-                        console.error(server_track_time);
+                        countdown = 20;
+                        console.error("CHECK COUNT", server_track_time, countdown);
                         if (!(server_track_time < countdown)) return [3 /*break*/, 2];
                         waiting_scene();
                         console.warn("COUNTDOWN", countdown - server_track_time);

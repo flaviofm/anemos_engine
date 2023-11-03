@@ -85,7 +85,8 @@ exports.app.get("/backend", function (req, res) {
     res.sendFile(path.join(__dirname, "/public/backend.html"));
 });
 //MANAGER
-var TRACKS = new managers_1.TrackManager();
+// const TRACKS = new TrackManager();
+var TRACKS;
 var TIME = new managers_1.TimeManager();
 var DEVICES = [];
 //API
@@ -134,6 +135,7 @@ exports.app.post("/vitals", function (req, res) { return __awaiter(void 0, void 
                 current_track_time: TIME.current_track_time,
                 track: track,
             };
+            console.log("vitals", check_data);
             res.send(check_data);
         }
         catch (err) {
@@ -150,16 +152,17 @@ function start_server(port) {
             var serverIp = ip.address();
             console.debug("\uD83C\uDF08\tServer started at http://".concat(serverIp, ":").concat(port, "\nBACKEND at: http://").concat(serverIp, ":").concat(port, "/backend.html\n"));
             //TIME
+            console.debug("duration2", TRACKS.duration);
             TIME.build(TRACKS.duration);
             //OSC
             setTimeout(function () {
                 (0, osc_client_1.startScene)();
                 console.debug("▶️\tOSC", "osc sent");
-            }, 120 * 1000);
+            }, 20 * 1000); //COUNTDOWN
         });
     }
     catch (err) {
         start_server(port + 1);
     }
 }
-start_server(3333);
+managers_1.TrackManager.build().then(function (res) { TRACKS = res; }).then(function () { return start_server(3333); });

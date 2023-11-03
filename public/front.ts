@@ -59,7 +59,7 @@ export class ClientDevice {
   }
   static ADJUST_THRESHOLD = 5; //seconds
 
-  private audio: HTMLAudioElement;
+  private audio: HTMLVideoElement;
   private log: HTMLElement;
   private status: HTMLElement;
   private error_log: HTMLElement;
@@ -189,11 +189,16 @@ export class ClientDevice {
       },
       body: JSON.stringify(this.client_vitals),
     }).then((res) => {
+      console.warn("VITALS", res);
+      
       console.log(res, res.ok, res.status);
       if (!res.ok) {
         this.error_log.innerText = "SERVER IS THE KILLER";
       }
       return res.json();
+    }).then((x) => {
+      console.log(x);
+      return x
     });
     const client_vitals = this.client_vitals;
 
@@ -218,6 +223,8 @@ export class ClientDevice {
   // }
 
   private async check_time(client_vitals: Vitals, server_vitals: Vitals) {
+    console.warn("CHECK VITALS", client_vitals, server_vitals);
+    
     const server_track_time = server_vitals.current_track_time / 1000;
     const client_track_time = client_vitals.current_track_time;
 
@@ -235,9 +242,9 @@ export class ClientDevice {
     //adjust
     console.log("ADJUSTING TIME");
 
-    const countdown = 120; //seconds
+    const countdown = 20; //seconds
 
-    console.error(server_track_time);
+    console.error("CHECK COUNT", server_track_time, countdown);
 
     if (server_track_time < countdown) {
       
