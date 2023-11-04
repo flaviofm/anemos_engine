@@ -1,4 +1,4 @@
-const getMP3Duration = require("get-mp3-duration");
+// const getMP3Duration = require("get-mp3-duration");
 const { getVideoDurationInSeconds } = require("get-video-duration");
 
 export interface Track {
@@ -28,7 +28,9 @@ export class TrackManager {
         const p = path.join(tracks_path, file)
         console.log(p);
         
-        const duration = (await getVideoDurationInSeconds(p)) * 1000;
+        //ffmpeg does not work on vercel
+        // const duration = (await getVideoDurationInSeconds(p)) * 1000;
+        const duration = 599333
 
         // const v = document.createElement("video");
         // v.preload = "metadata";
