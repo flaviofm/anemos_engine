@@ -144,7 +144,7 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
     ClientDevice.prototype.set_track = function (t) {
         var _this = this;
         //CAMBIATE TRACKS CONO SERVER MAX
-        // const src = "/tracks/" + t.src;
+        // const src = "/tracks/" + t.src;s
         var src = t.src;
         console.log(src);
         return new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
