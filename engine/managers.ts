@@ -15,6 +15,29 @@ export class TrackManager {
 
   static async build() {
     const n = new TrackManager();
+    const url = "https://www.maxmagaldi.com/_vainglory_online_videos/";
+    const duration = 599333;
+    const tracks: Track[] = [
+      {
+        id: 0,
+        src: url + "1(3).mp4",
+        label: "1(3)",
+        instances: 0,
+        duration: duration,
+      },
+      {
+        id: 0,
+        src: url + "3(2).mp4",
+        label: "3(2)",
+        instances: 0,
+        duration: duration,
+      }
+    ];
+    console.log("TRACK", tracks);
+
+    n._tracks.push(...tracks);
+    /*
+    * NON POSSO LEGGERE LE TRACCE, PRENDO DA SERVER DI MAX
     const fs = require("fs");
     const path = require("path");
     const tracks_path = path.join(__dirname, "../public/tracks");
@@ -60,8 +83,9 @@ export class TrackManager {
         n._tracks.push(track);
         return
       }))
+      */
     console.debug("TRACK LOADED", ...n._tracks.map((t) => t.label));
-    return n
+    return n;
   }
 
   private constructor() {}
@@ -85,7 +109,7 @@ export class TrackManager {
 
   public get duration() {
     console.log("TRACK LENG", this._tracks.length);
-    
+
     if (this._tracks.length === 0) return 0;
     return this._tracks[0].duration;
   }
@@ -123,12 +147,17 @@ export class TimeManager {
   }
 
   public get current_track_time() {
-    console.warn("current track time", this.current_server_time, this.duration, this.current_loop);
-    
+    console.warn(
+      "current track time",
+      this.current_server_time,
+      this.duration,
+      this.current_loop
+    );
+
     // console.log("current time", this.current_server_time, this.duration, this.current_loop);
     const res = this.current_server_time - this.duration * this.current_loop;
     // console.log("=", res);
-    return res
+    return res;
   }
 
   public get current_loop() {
@@ -150,8 +179,8 @@ export class ServerDevice {
   private __dead__ = false;
   private kill() {
     console.warn("🪦", "RIP DEVICE", this.id);
-    this.stop_dead_sentence()
-    this.stop_ping_timeout()
+    this.stop_dead_sentence();
+    this.stop_ping_timeout();
     this.__dead__ = true;
   }
   public get dead() {
@@ -165,12 +194,12 @@ export class ServerDevice {
   }
   private inactivity_timeout: ReturnType<typeof setTimeout>;
   private stop_dead_sentence() {
-    if(!this.inactivity_timeout) return
+    if (!this.inactivity_timeout) return;
     clearTimeout(this.inactivity_timeout);
-    this.inactivity_timeout = undefined!
+    this.inactivity_timeout = undefined!;
   }
   public set active(a: boolean) {
-    if(this.dead) throw new Error("NO")
+    if (this.dead) throw new Error("NO");
     if (a == false && this._active == true) {
       console.log("DEACTIVATED", this.id, this._lastPing, Date.now());
       this.inactivity_timeout = setTimeout(() => {
@@ -181,7 +210,7 @@ export class ServerDevice {
     }
     if (a == true && this._active == false) {
       console.log("REVIVING", this.id);
-      if (!this.inactivity_timeout) this.stop_dead_sentence()
+      if (!this.inactivity_timeout) this.stop_dead_sentence();
     }
     this._active = a;
   }
@@ -199,48 +228,46 @@ export class ServerDevice {
   }
 
   private stop_ping_timeout() {
-    
-    if(!this.timeout) return
-    clearTimeout(this.timeout)
-    this.timeout = undefined!
+    if (!this.timeout) return;
+    clearTimeout(this.timeout);
+    this.timeout = undefined!;
     console.log("STOPPED TIMEOUT", this.id);
   }
 
   private _pinging = false;
-  private _lastPing : number
+  private _lastPing: number;
 
   public async ping() {
-    console.log('🏓', this.id, "pings");
-    this._pinging = true
-    if(!!this._lastPing) {
+    console.log("🏓", this.id, "pings");
+    this._pinging = true;
+    if (!!this._lastPing) {
       console.log(this.id, "last ping", Date.now() - this._lastPing);
-      this._lastPing = Date.now()
+      this._lastPing = Date.now();
     } else {
-      this._lastPing = Date.now()
+      this._lastPing = Date.now();
     }
-    
-    this.stop_ping_timeout()
-    
-    if(this.dead) {
-      throw new Error("DEVICE IS DEAD")
+
+    this.stop_ping_timeout();
+
+    if (this.dead) {
+      throw new Error("DEVICE IS DEAD");
     }
     if (!this._active) {
       console.warn("should ping but not active - OLD DEVICE");
       // return;
     }
-    this.active = true
+    this.active = true;
     // console.log("PINGING", this.id, Date.now());
     console.log("running", this.id, "ping timeout");
     this.timeout = setTimeout(() => {
       console.warn("PING TIMEOUT FOR", this.id);
-      if(!this._pinging) this.active = false;
+      if (!this._pinging) this.active = false;
       else {
         console.log("NOT HAPPENING PING WENT THROUGHN FOR", this.id);
-        
       }
     }, ServerDevice.PING_WAIT_TIMEOUT);
 
-    this._pinging = false
-    return
+    this._pinging = false;
+    return;
   }
 }

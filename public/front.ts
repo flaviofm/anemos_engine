@@ -97,7 +97,10 @@ export class ClientDevice {
   }
 
   private set_track(t: Track) {
-    const src = "/tracks/" + t.src;
+    //CAMBIATE TRACKS CONO SERVER MAX
+    // const src = "/tracks/" + t.src;
+    const src = t.src;
+    
     console.log(src);
 
     return new Promise(async (resolve, reject) => {

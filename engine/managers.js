@@ -1,4 +1,6 @@
 "use strict";
+// const getMP3Duration = require("get-mp3-duration");
+// const { getVideoDurationInSeconds } = require("get-video-duration");
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -46,8 +48,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServerDevice = exports.TimeManager = exports.TrackManager = void 0;
-var getMP3Duration = require("get-mp3-duration");
-var getVideoDurationInSeconds = require("get-video-duration").getVideoDurationInSeconds;
 var TrackManager = /** @class */ (function () {
     function TrackManager() {
         this._tracks = [];
@@ -55,58 +55,80 @@ var TrackManager = /** @class */ (function () {
     }
     TrackManager.build = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var n, fs, path, tracks_path, files;
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        n = new TrackManager();
-                        fs = require("fs");
-                        path = require("path");
-                        tracks_path = path.join(__dirname, "../public/tracks");
-                        files = fs.readdirSync(tracks_path);
-                        return [4 /*yield*/, Promise.all(files
-                                .filter(function (file) { return path.extname(file) === ".mp4"; })
-                                .sort()
-                                .map(function (file, index) { return __awaiter(_this, void 0, void 0, function () {
-                                var p, duration, track;
-                                return __generator(this, function (_a) {
-                                    switch (_a.label) {
-                                        case 0:
-                                            p = path.join(tracks_path, file);
-                                            console.log(p);
-                                            return [4 /*yield*/, getVideoDurationInSeconds(p)];
-                                        case 1:
-                                            duration = (_a.sent()) * 1000;
-                                            // const v = document.createElement("video");
-                                            // v.preload = "metadata";
-                                            // v.src = "/tracks/" + file;
-                                            // const duration = await new Promise<number>((succ, rej) => {
-                                            //   v.addEventListener("loadedmetadata", () => {
-                                            //     window.URL.revokeObjectURL(v.src);
-                                            //     succ(v.duration);
-                                            //   });
-                                            //   v.load()
-                                            // })
-                                            console.log("DURATION", duration);
-                                            track = {
-                                                id: index,
-                                                src: file,
-                                                label: file,
-                                                instances: 0,
-                                                duration: duration,
-                                            };
-                                            console.log("TRACK", track);
-                                            n._tracks.push(track);
-                                            return [2 /*return*/];
-                                    }
-                                });
-                            }); }))];
-                    case 1:
-                        _a.sent();
-                        console.debug.apply(console, __spreadArray(["TRACK LOADED"], n._tracks.map(function (t) { return t.label; }), false));
-                        return [2 /*return*/, n];
-                }
+            var n, url, duration, tracks;
+            var _a;
+            return __generator(this, function (_b) {
+                n = new TrackManager();
+                url = "https://www.maxmagaldi.com/_vainglory_online_videos/";
+                duration = 599333;
+                tracks = [
+                    {
+                        id: 0,
+                        src: url + "1(3).mp4",
+                        label: "1(3)",
+                        instances: 0,
+                        duration: duration,
+                    },
+                    {
+                        id: 0,
+                        src: url + "3(2).mp4",
+                        label: "3(2)",
+                        instances: 0,
+                        duration: duration,
+                    }
+                ];
+                console.log("TRACK", tracks);
+                (_a = n._tracks).push.apply(_a, tracks);
+                /*
+                * NON POSSO LEGGERE LE TRACCE, PRENDO DA SERVER DI MAX
+                const fs = require("fs");
+                const path = require("path");
+                const tracks_path = path.join(__dirname, "../public/tracks");
+                const files = fs.readdirSync(tracks_path) as string[];
+                await Promise.all(files
+                  .filter((file: string) => path.extname(file) === ".mp4")
+                  .sort()
+                  .map(async (file: string, index: number) => {
+                    // const buffer = fs.readFileSync(path.join(tracks_path, file));
+                    // const duration = getMP3Duration(buffer);
+                    const p = path.join(tracks_path, file)
+                    console.log(p);
+                    
+                    //ffmpeg does not work on vercel
+                    // const duration = (await getVideoDurationInSeconds(p)) * 1000;
+                    const duration = 599333
+            
+                    // const v = document.createElement("video");
+                    // v.preload = "metadata";
+                    // v.src = "/tracks/" + file;
+            
+                    // const duration = await new Promise<number>((succ, rej) => {
+                    //   v.addEventListener("loadedmetadata", () => {
+                    //     window.URL.revokeObjectURL(v.src);
+                    //     succ(v.duration);
+                    //   });
+                    //   v.load()
+                    // })
+            
+                    console.log("DURATION", duration);
+                    
+                    
+            
+                    const track: Track = {
+                      id: index,
+                      src: file,
+                      label: file,
+                      instances: 0,
+                      duration: duration,
+                    };
+                    console.log("TRACK", track);
+                    
+                    n._tracks.push(track);
+                    return
+                  }))
+                  */
+                console.debug.apply(console, __spreadArray(["TRACK LOADED"], n._tracks.map(function (t) { return t.label; }), false));
+                return [2 /*return*/, n];
             });
         });
     };
@@ -281,7 +303,7 @@ var ServerDevice = exports.ServerDevice = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
             return __generator(this, function (_a) {
-                console.log('🏓', this.id, "pings");
+                console.log("🏓", this.id, "pings");
                 this._pinging = true;
                 if (!!this._lastPing) {
                     console.log(this.id, "last ping", Date.now() - this._lastPing);
