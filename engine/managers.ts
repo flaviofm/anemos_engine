@@ -17,22 +17,21 @@ export class TrackManager {
     const n = new TrackManager();
     const url = "https://www.maxmagaldi.com/_vainglory_online_videos/";
     const duration = 599333;
-    const tracks: Track[] = [
-      {
-        id: 0,
-        src: url + "1(3).mp4",
-        label: "1(3)",
-        instances: 0,
-        duration: duration,
-      },
-      {
-        id: 0,
-        src: url + "3(2).mp4",
-        label: "3(2)",
+    
+    const tracks: Track[] =[
+      "1(3).mp4",
+      "3(2).mp4",
+    ].map((f, i) => {
+      return {
+        id: i,
+        src: url + f,
+        label: f.replace(".mp4", ""),
         instances: 0,
         duration: duration,
       }
-    ];
+    })
+    
+    
     console.log("TRACK", tracks);
 
     n._tracks.push(...tracks);

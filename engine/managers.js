@@ -62,21 +62,17 @@ var TrackManager = /** @class */ (function () {
                 url = "https://www.maxmagaldi.com/_vainglory_online_videos/";
                 duration = 599333;
                 tracks = [
-                    {
-                        id: 0,
-                        src: url + "1(3).mp4",
-                        label: "1(3)",
+                    "1(3).mp4",
+                    "3(2).mp4",
+                ].map(function (f, i) {
+                    return {
+                        id: i,
+                        src: url + f,
+                        label: f.replace(".mp4", ""),
                         instances: 0,
                         duration: duration,
-                    },
-                    {
-                        id: 0,
-                        src: url + "3(2).mp4",
-                        label: "3(2)",
-                        instances: 0,
-                        duration: duration,
-                    }
-                ];
+                    };
+                });
                 console.log("TRACK", tracks);
                 (_a = n._tracks).push.apply(_a, tracks);
                 /*
