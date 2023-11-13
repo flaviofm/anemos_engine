@@ -18,9 +18,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   const ok = await device.setup();
   console.warn("INITED");
   await ready_scene();
+  console.log("READY");
   
   play_btns.forEach((e) =>
   e.addEventListener("click", async () => {
+    console.log("CLICKED");
+    
     await device.ping_once();
     var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       if (isSafari) {
