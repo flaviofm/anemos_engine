@@ -68,12 +68,15 @@ window.addEventListener("DOMContentLoaded", function () { return __awaiter(void 
                 return [4 /*yield*/, ready_scene()];
             case 5:
                 _b.sent();
+                console.log("READY");
                 play_btns.forEach(function (e) {
                     return e.addEventListener("click", function () { return __awaiter(void 0, void 0, void 0, function () {
                         var isSafari;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
-                                case 0: return [4 /*yield*/, device.ping_once()];
+                                case 0:
+                                    console.log("CLICKED");
+                                    return [4 /*yield*/, device.ping_once()];
                                 case 1:
                                     _a.sent();
                                     isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
