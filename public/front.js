@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ClientDevice = void 0;
-console.log("FRONTEND");
+console.log("FRONTEND v1.0.1");
 var PROCESS = function () {
     return fetch("/setup").then(function (res) {
         console.debug(res, res.ok, res.status, res.statusText);

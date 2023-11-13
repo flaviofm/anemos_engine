@@ -1,7 +1,7 @@
 import { Vitals, setup_data } from "../app";
 import { Track } from "../engine/managers";
 
-console.log("FRONTEND");
+console.log("FRONTEND v1.0.1");
 var PROCESS: () => Promise<setup_data> = () =>
   fetch("/setup").then((res) => {
     console.debug(res, res.ok, res.status, res.statusText);
