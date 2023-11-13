@@ -18,7 +18,7 @@ export class TrackManager {
     const url = "https://www.maxmagaldi.com/_vainglory_online_videos/";
     const duration = 599333;
     
-    const tracks: Track[] =[
+    const tracks: Track[] = [
       "1(3).mp4",
       "3(2).mp4",
     ].map((f, i) => {
@@ -27,10 +27,9 @@ export class TrackManager {
         src: url + f,
         label: f.replace(".mp4", ""),
         instances: 0,
-        duration: duration,
+        duration: duration
       }
     })
-    
     
     console.log("TRACK", tracks);
 

@@ -70,7 +70,7 @@ var TrackManager = /** @class */ (function () {
                         src: url + f,
                         label: f.replace(".mp4", ""),
                         instances: 0,
-                        duration: duration,
+                        duration: duration
                     };
                 });
                 console.log("TRACK", tracks);
