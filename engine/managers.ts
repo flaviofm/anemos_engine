@@ -130,6 +130,7 @@ export class TimeManager {
     const d = Date.now();
     this._start_time = d;
     this._duration = duration;
+    console.log("TIME MANAGER", this._start_time, this._duration);
   }
 
   public get duration() {
@@ -141,6 +142,8 @@ export class TimeManager {
   }
 
   public get current_server_time() {
+    console.log("current server time", this.current_time, this.start_time);
+    
     return this.current_time - this.start_time;
   }
 

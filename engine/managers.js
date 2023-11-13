@@ -170,6 +170,7 @@ var TimeManager = /** @class */ (function () {
         var d = Date.now();
         this._start_time = d;
         this._duration = duration;
+        console.log("TIME MANAGER", this._start_time, this._duration);
     };
     Object.defineProperty(TimeManager.prototype, "duration", {
         get: function () {
@@ -187,6 +188,7 @@ var TimeManager = /** @class */ (function () {
     });
     Object.defineProperty(TimeManager.prototype, "current_server_time", {
         get: function () {
+            console.log("current server time", this.current_time, this.start_time);
             return this.current_time - this.start_time;
         },
         enumerable: false,

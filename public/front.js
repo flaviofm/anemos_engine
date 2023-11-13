@@ -40,7 +40,7 @@ exports.ClientDevice = void 0;
 console.log("FRONTEND v1.0.1");
 var PROCESS = function () {
     return fetch("/setup").then(function (res) {
-        console.debug(res, res.ok, res.status, res.statusText);
+        console.warn(res, res.ok, res.status, res.statusText);
         return res.json();
     });
 };
