@@ -18,10 +18,11 @@ window.addEventListener("DOMContentLoaded", async () => {
   const ok = await device.setup();
   console.warn("INITED");
   await ready_scene();
-
+  
   play_btns.forEach((e) =>
-    e.addEventListener("click", async () => {
-      var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  e.addEventListener("click", async () => {
+    await device.ping_once();
+    var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       if (isSafari) {
         device.play();
         device.pause();
@@ -31,7 +32,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       document.getElementById('landing')!.classList.remove("active");
 
       play_btns.forEach((e) => e.classList.remove("active"));
-      await device.ping_once();
+      // await device.ping_once();
 
       device.play();
     })
@@ -50,10 +51,18 @@ async function init(data: setup_data) {
     start_time,
     current_time
   );
+  await device.wait_video_loaded;
   return device;
 }
 
 export class ClientDevice {
+  wait_video_loaded = new Promise((resolve, reject) => {
+    const video = document.getElementById("audio") as HTMLVideoElement;
+    video.oncanplaythrough = () => {
+      console.warn("VIDEO LOADED");
+      resolve(true);
+    };
+  });
   pause() {
     this.audio.pause();
   }
@@ -148,8 +157,7 @@ export class ClientDevice {
 
   private get computed_current_track_time() {
     const server_count = this.server_start_time - this.server_current_time;
-    const local_count =
-      (Date.now() - this.server_start_time) % this.local_duration;
+    const local_count = (Date.now() - this.server_start_time) % this.local_duration;
 
     const check_time = server_count - local_count;
     if (check_time < 2 && check_time > -2) {

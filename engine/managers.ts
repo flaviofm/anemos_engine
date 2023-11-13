@@ -155,7 +155,7 @@ export class TimeManager {
 
     // console.log("current time", this.current_server_time, this.duration, this.current_loop);
     const res = this.current_server_time - this.duration * this.current_loop;
-    // console.log("=", res);
+    console.log("=", res);
     return res;
   }
 

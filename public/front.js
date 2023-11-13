@@ -73,7 +73,9 @@ window.addEventListener("DOMContentLoaded", function () { return __awaiter(void 
                         var isSafari;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
-                                case 0:
+                                case 0: return [4 /*yield*/, device.ping_once()];
+                                case 1:
+                                    _a.sent();
                                     isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
                                     if (isSafari) {
                                         device.play();
@@ -82,9 +84,7 @@ window.addEventListener("DOMContentLoaded", function () { return __awaiter(void 
                                     // waiting_scene()
                                     document.getElementById('landing').classList.remove("active");
                                     play_btns.forEach(function (e) { return e.classList.remove("active"); });
-                                    return [4 /*yield*/, device.ping_once()];
-                                case 1:
-                                    _a.sent();
+                                    // await device.ping_once();
                                     device.play();
                                     return [2 /*return*/];
                             }
@@ -100,10 +100,16 @@ function init(data) {
     return __awaiter(this, void 0, void 0, function () {
         var id, track, start_time, current_time, device;
         return __generator(this, function (_a) {
-            console.log("INIT", data);
-            id = data.id, track = data.track, start_time = data.start_time, current_time = data.current_time;
-            device = new ClientDevice(id, track, Date.now(), start_time, current_time);
-            return [2 /*return*/, device];
+            switch (_a.label) {
+                case 0:
+                    console.log("INIT", data);
+                    id = data.id, track = data.track, start_time = data.start_time, current_time = data.current_time;
+                    device = new ClientDevice(id, track, Date.now(), start_time, current_time);
+                    return [4 /*yield*/, device.wait_video_loaded];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/, device];
+            }
         });
     });
 }
@@ -114,6 +120,13 @@ var ClientDevice = exports.ClientDevice = /** @class */ (function () {
         this.client_start_time = client_start_time;
         this.server_start_time = server_start_time;
         this.server_current_time = server_current_time;
+        this.wait_video_loaded = new Promise(function (resolve, reject) {
+            var video = document.getElementById("audio");
+            video.oncanplaythrough = function () {
+                console.warn("VIDEO LOADED");
+                resolve(true);
+            };
+        });
         this.audio = document.getElementById("audio");
         this.log = document.getElementById("log");
         this.status = document.getElementById("status");

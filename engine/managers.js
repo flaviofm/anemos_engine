@@ -197,7 +197,7 @@ var TimeManager = /** @class */ (function () {
             console.warn("current track time", this.current_server_time, this.duration, this.current_loop);
             // console.log("current time", this.current_server_time, this.duration, this.current_loop);
             var res = this.current_server_time - this.duration * this.current_loop;
-            // console.log("=", res);
+            console.log("=", res);
             return res;
         },
         enumerable: false,
