@@ -329,7 +329,7 @@ function set_section(id: string) {
   });
 }
 async function landing_scene() {
-  delay(1000)
+  return delay(1000)
     .then(() => {
       set_section("landing");
       console.log("1");
@@ -347,6 +347,7 @@ async function ready_scene() {
   play_btns.forEach((b) => b.classList.add("active"));
   // play_btns.forEach((b) => b.classList.add("active"));
   //TODO: pagina con il tasto play
+  return
 }
 async function waiting_scene() {
   console.warn('waiting');

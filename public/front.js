@@ -404,24 +404,23 @@ function landing_scene() {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
         return __generator(this, function (_a) {
-            delay(1000)
-                .then(function () {
-                set_section("landing");
-                console.log("1");
-            })
-                .then(function () { return __awaiter(_this, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, delay(3000).then(function (res) {
-                                var _a;
-                                console.log("2");
-                                (_a = document.getElementById("landing")) === null || _a === void 0 ? void 0 : _a.classList.add("ready");
-                            })];
-                        case 1: return [2 /*return*/, _a.sent()];
-                    }
-                });
-            }); });
-            return [2 /*return*/];
+            return [2 /*return*/, delay(1000)
+                    .then(function () {
+                    set_section("landing");
+                    console.log("1");
+                })
+                    .then(function () { return __awaiter(_this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, delay(3000).then(function (res) {
+                                    var _a;
+                                    console.log("2");
+                                    (_a = document.getElementById("landing")) === null || _a === void 0 ? void 0 : _a.classList.add("ready");
+                                })];
+                            case 1: return [2 /*return*/, _a.sent()];
+                        }
+                    });
+                }); })];
         });
     });
 }
@@ -431,6 +430,8 @@ function ready_scene() {
             console.warn("READY");
             // set_section("ready");
             play_btns.forEach(function (b) { return b.classList.add("active"); });
+            // play_btns.forEach((b) => b.classList.add("active"));
+            //TODO: pagina con il tasto play
             return [2 /*return*/];
         });
     });
